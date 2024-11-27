@@ -32,14 +32,14 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="#">Genres</a>
                             </li>
-                            <li class="nav-item dropdown">
+                            <li class="nav5-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     Books
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">By Author</a></li>
-                                    <li><a class="dropdown-item" href="#">By Genre</a></li>
-                                    <li><a class="dropdown-item" href="#">By Title</a></li>
+                                    <li><a class="dropdown-item" href="{{ url()->query('/books/author') }}">By Author</a></li>
+                                    <li><a class="dropdown-item" href="{{ url()->query('/books/genre') }}">By Genre</a></li>
+                                    <li><a class="dropdown-item" href="{{ url()->query('/books/title') }}">By Title</a></li>
                                     {{--<li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="#">Something else here</a></li>--}}
                                 </ul>

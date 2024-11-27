@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [BookController::class, 'list'])->name('book.list');
+Route::get('/books/{sort?}', [BookController::class, 'list'])->name('book.list');
 Route::get('/genres', [GenreController::class, 'list'])->name('genres.list');
 Route::get('/authors', [AuthorController::class, 'list'])->name('genres.list');
 

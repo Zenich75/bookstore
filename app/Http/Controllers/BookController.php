@@ -64,9 +64,25 @@ class BookController extends Controller
         return redirect()->route('books.index');
     }
 
-    public function list()
+    public function list($sort = null): object
     {
-        $books = Book::with('author', 'genre')->paginate(9);
+        echo $sort;
+
+        $booksQuery = Book::query()
+            ->with('author', 'genre');
+
+        if ($sort === 'title') {
+            $booksQuery->orderBy('title');
+        } elseif ($sort === 'author') {
+            //$booksQuery->orderBy('author.first_name');
+            $booksQuery->leftJoin('authors', 'author_id', '=', 'id')
+                ->orderBy('author.first_name');
+        } elseif ($sort === 'genre') {
+            $booksQuery->orderBy('genre.genre');
+        }
+
+        $books = $booksQuery->paginate(9);
+
         return view('bookstore.layouts.app', [
             'books' => $books
         ]);
