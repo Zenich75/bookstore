@@ -19,6 +19,7 @@ composer install
 ./vendor/bin/sail artisan key:generate
 ./vendor/bin/sail artisan migrate --seed
 ./vendor/bin/sail artisan queue:work      # in a separate terminal
+npm install && npm run build              # Tailwind assets (or `npm run dev`)
 ```
 
 Demo data volume is controlled by `SEED_SCALE` (`small` by default, `full` ≈ 50k books /
@@ -57,7 +58,7 @@ Useful commands:
 | 0 | Project setup: Sail, Debugbar, strict mode, database queue | [docs/00-setup.md](docs/00-setup.md) |
 | 1 | Schema, models (PHP attributes), enums, factories, seeders | [docs/01-schema.md](docs/01-schema.md) |
 | 2 | Eloquent relationships, custom pivot, morph map, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
-| 3 | _TBD_ | |
+| 3 | Routes (bindings, scoped, withTrashed, groups, fallback), Blade layouts & components, catalog | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
 | 4 | _TBD_ | |
 | 5 | _TBD_ | |
 | 6 | _TBD_ | |

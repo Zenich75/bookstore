@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Author;
 use App\Models\Book;
+use App\View\Composers\GenreTreeComposer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,5 +35,8 @@ class AppServiceProvider extends ServiceProvider
             'book' => Book::class,
             'author' => Author::class,
         ]);
+
+        // View composer: runs whenever the catalog sidebar partial is rendered.
+        View::composer('books.partials.sidebar', GenreTreeComposer::class);
     }
 }
