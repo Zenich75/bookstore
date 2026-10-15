@@ -21,10 +21,11 @@ trait ShowsBook
             'authors:id,first_name,last_name,slug',
             'tags:id,name',
             'cover',
-            'warehouses' => fn ($query) => $query->orderBy('name'),
             'latestReview.user:id,name',
             'bestReview.user:id,name',
-        ])->loadCount('reviews')->loadAvg('reviews', 'rating');
+        ])->loadCount('reviews')->loadAvg('reviews', 'rating')
+            // Public page: overall availability only; per-warehouse stock is staff data (/manage).
+            ->loadSum('stocks', 'quantity')->loadSum('stocks', 'reserved');
 
         // Approved only: Review's global ApprovedScope applies to relation queries too.
         $reviews = $book->reviews()

@@ -17,6 +17,9 @@ function seedSmall(): void
     test()->seed(DatabaseSeeder::class);
 }
 
+// Reports are behind auth + can:view-reports.
+beforeEach(fn () => asAdmin());
+
 test('stock report equals the same totals computed with collections', function () {
     seedSmall();
     Book::orderBy('id')->first()->delete(); // soft-deleted books are excluded by both

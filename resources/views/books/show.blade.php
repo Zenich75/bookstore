@@ -56,22 +56,15 @@
             @endif
 
             <x-card>
-                <x-slot:header>{{ __('ui.book.stock_by_warehouse') }}</x-slot:header>
-                <table class="w-full text-sm">
-                    <tbody>
-                        @forelse ($book->warehouses as $warehouse)
-                            <tr class="border-b border-stone-100 last:border-0">
-                                <td class="py-1.5"><a href="{{ route('warehouses.show', $warehouse) }}" class="hover:underline">{{ $warehouse->name }}</a></td>
-                                <td class="py-1.5 text-stone-500">{{ $warehouse->stock->shelf_code }}</td>
-                                <td class="py-1.5 text-right">
-                                    <x-stock-badge :quantity="$warehouse->stock->quantity" :reserved="$warehouse->stock->reserved" />
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td class="py-1.5 text-stone-500">{{ __('ui.book.not_stocked') }}</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <x-slot:header>{{ __('ui.book.availability') }}</x-slot:header>
+                {{-- Status only; quantities per warehouse are visible to staff in /manage. --}}
+                <x-stock-badge :quantity="(int) $book->stocks_sum_quantity" :reserved="(int) $book->stocks_sum_reserved" />
+                @role('manager', 'admin')
+                    <a href="{{ route('manage.warehouses.index') }}" class="ml-3 text-sm text-amber-700 hover:underline">{{ __('ui.book.manage_stock') }}</a>
+                @endrole
+                @role('admin')
+                    <a href="{{ route('admin.books.edit', $book) }}" class="ml-3 text-sm text-amber-700 hover:underline">{{ __('ui.admin.edit') }}</a>
+                @endrole
             </x-card>
 
             <div class="grid gap-4 md:grid-cols-2">

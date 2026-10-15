@@ -32,18 +32,26 @@ function appRouteNames(): array
         ->sort()->values()->all();
 }
 
-test('every named route resolves and returns 200', function () {
+test('every named GET route resolves and returns 200 for an admin', function () {
+    asAdmin();
+    $stock = $this->warehouse->stocks()->first();
+
     $params = [
         'books.show' => [$this->book],
         'authors.show' => [$this->author],
         'authors.books.show' => [$this->author, $this->book],
         'genres.show' => [$this->genre],
-        'warehouses.show' => [$this->warehouse],
         'admin.books.show' => [$this->book],
+        'admin.books.edit' => [$this->book],
+        'manage.warehouses.stocks.index' => [$this->warehouse],
+        'manage.warehouses.movements.index' => [$this->warehouse],
+        'manage.warehouses.stocks.edit' => [$this->warehouse, $stock],
     ];
+    // Guest-only pages redirect logged-in users; the signed verify link is tested in AuthTest.
+    $skip = ['login', 'register', 'verification.notice', 'verification.verify'];
 
     $tested = [];
-    foreach (appRouteNames() as $name) {
+    foreach (array_diff(appRouteNames(), $skip) as $name) {
         // genres.show redirects to the filtered catalog; follow it.
         $this->followingRedirects()->get(route($name, $params[$name] ?? []))
             ->assertOk();
@@ -51,15 +59,20 @@ test('every named route resolves and returns 200', function () {
     }
 
     expect($tested)->toContain('home', 'books.index', 'books.show', 'authors.index', 'authors.show',
-        'authors.books.show', 'genres.index', 'genres.show', 'warehouses.index', 'warehouses.show',
-        'about', 'admin.dashboard', 'admin.books.show', 'lab.relations');
+        'authors.books.show', 'genres.index', 'genres.show', 'about', 'admin.dashboard', 'admin.books.index',
+        'admin.books.create', 'admin.books.edit', 'admin.reviews.index', 'manage.warehouses.index',
+        'manage.warehouses.stocks.edit', 'reports.stock', 'lab.relations');
 });
+
+test('guest-only pages render for guests', function (string $name) {
+    $this->get(route($name))->assertOk();
+})->with(['login', 'register']);
 
 test('routes bind by slug and by id as declared', function () {
     expect(route('books.show', $this->book))->toEndWith('/books/'.$this->book->slug)
         ->and(route('authors.books.show', [$this->author, $this->book]))
         ->toEndWith("/authors/{$this->author->slug}/books/{$this->book->slug}")
-        ->and(route('warehouses.show', $this->warehouse))->toEndWith('/warehouses/'.$this->warehouse->id)
+        ->and(route('manage.warehouses.stocks.index', $this->warehouse))->toEndWith("/manage/warehouses/{$this->warehouse->id}/stocks")
         ->and(route('admin.books.show', $this->book))->toEndWith('/admin/books/'.$this->book->id);
 });
 
@@ -74,7 +87,6 @@ test('unknown slugs return 404', function (string $url) {
     'book' => '/books/no-such-book',
     'author' => '/authors/no-such-author',
     'genre' => '/genres/no-such-genre',
-    'warehouse' => '/warehouses/999999',
 ]);
 
 test('scoped binding: a book that is not by the author is a 404', function () {
@@ -86,6 +98,7 @@ test('scoped binding: a book that is not by the author is a 404', function () {
 
 test('soft-deleted book: 404 publicly, 200 in admin (withTrashed)', function () {
     $this->book->delete();
+    asAdmin();
 
     $this->get("/books/{$this->book->slug}")->assertNotFound();
     $this->get("/authors/{$this->author->slug}/books/{$this->book->slug}")->assertNotFound();

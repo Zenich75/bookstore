@@ -29,7 +29,16 @@ npm install && npm run build              # Tailwind assets (or `npm run dev`)
 docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --seed
 ```
 
-Облікові записи з сидерів (пароль `password`): `admin@example.com`, `manager1..5@example.com`.
+Облікові записи з сидерів (пароль `password`, пошту вже підтверджено):
+
+| Пошта | Роль | Доступ |
+|---|---|---|
+| `admin@example.com` | адміністратор | усе: `/admin`, `/manage` (усі склади), `/reports`, лабораторії |
+| `manager1@example.com` … `manager5@example.com` | менеджер складу №1…5 | `/manage` (лише свій склад), `/reports` |
+| інші адреси з таблиці `users` | читач | публічні сторінки |
+
+Нові користувачі реєструються на `/register` і підтверджують пошту листом — локально його видно
+в Mailpit (<http://localhost:8025>).
 
 Порада: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 
@@ -41,7 +50,9 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | Лабораторія N+1 | <http://localhost/lab/n-plus-one> |
 | Лабораторія колекцій | <http://localhost/lab/collections> |
 | Лабораторія моделей | <http://localhost/lab/models> |
-| Звіти | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
+| Склади (менеджер/адмін) | <http://localhost/manage/warehouses> |
+| Адмінка | <http://localhost/admin> |
+| Звіти (менеджер/адмін) | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
 | MySQL (з хоста) | `127.0.0.1:3307`, користувач `sail` / `password` |
 
 Корисні команди:
@@ -81,7 +92,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | 4 | N+1: суворий режим, профайлер, лабораторія з 19 варіантів, тести сталої кількості запитів | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
 | 5 | Колекції проти Query Builder, chunk/lazy/cursor, звіти, потокове CSV | [docs/05-collections.md](docs/05-collections.md) |
 | 6 | Аксесори й мутатори, касти (`Money`, `encrypted`), серіалізація, локальні й глобальні скоупи, події та спостерігачі, масове присвоєння, `/lab/models` | [docs/06-attributes-casts.md](docs/06-attributes-casts.md) |
-| 7 | _буде згодом_ | |
+| 7 | Автентифікація без стартових наборів, підтвердження пошти, middleware (до/після/термінальне), гейти й політики, `Gate::before`, IDOR і scoped bindings, обмеження частоти, адмінка й керування залишками | [docs/07-middleware-auth.md](docs/07-middleware-auth.md) |
 | 8 | _буде згодом_ | |
 | 9 | _буде згодом_ | |
 | 10 | _буде згодом_ | |

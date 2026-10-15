@@ -20,7 +20,6 @@
                     'books.index' => __('ui.nav.catalog'),
                     'authors.index' => __('ui.nav.authors'),
                     'genres.index' => __('ui.nav.genres'),
-                    'warehouses.index' => __('ui.nav.warehouses'),
                     'about' => __('ui.nav.about'),
                 ];
             @endphp
@@ -33,16 +32,49 @@
                    ])>{{ $label }}</a>
             @endforeach
 
-            <span class="ml-auto flex gap-4 text-sm text-stone-500">
-                <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_relations') }}</a>
-                <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_n_plus_one') }}</a>
-                <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
-                <a href="{{ route('lab.models') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_models') }}</a>
-                <a href="{{ route('reports.stock') }}" class="hover:text-amber-700">{{ __('ui.nav.reports') }}</a>
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-700">{{ __('ui.nav.admin') }}</a>
+            {{-- Staff links: custom @role directive (Blade::if) and @can for a gate. --}}
+            @role('manager', 'admin')
+                <a href="{{ route('manage.warehouses.index') }}" @class(['text-sm hover:text-amber-700', 'font-semibold text-amber-700' => request()->routeIs('manage.*')])>{{ __('ui.nav.manage') }}</a>
+            @endrole
+            @can('view-reports')
+                <a href="{{ route('reports.stock') }}" @class(['text-sm hover:text-amber-700', 'font-semibold text-amber-700' => request()->routeIs('reports.*')])>{{ __('ui.nav.reports') }}</a>
+            @endcan
+            @role('admin')
+                <a href="{{ route('admin.dashboard') }}" @class(['text-sm hover:text-amber-700', 'font-semibold text-amber-700' => request()->routeIs('admin.*')])>{{ __('ui.nav.admin') }}</a>
+            @endrole
+
+            <span class="ml-auto flex flex-wrap items-center gap-4 text-sm text-stone-500">
+                @if (App\Http\Middleware\LabAccess::allows(auth()->user()))
+                    <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_relations') }}</a>
+                    <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_n_plus_one') }}</a>
+                    <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
+                    <a href="{{ route('lab.models') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_models') }}</a>
+                @endif
+
+                @auth
+                    <span class="text-stone-700" data-user>{{ auth()->user()->name }} <span class="text-xs text-stone-400">({{ auth()->user()->role->label() }})</span></span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="hover:text-amber-700">{{ __('ui.nav.logout') }}</button>
+                    </form>
+                @endauth
+                @guest
+                    <a href="{{ route('login') }}" class="hover:text-amber-700">{{ __('ui.nav.login') }}</a>
+                    <a href="{{ route('register') }}" class="hover:text-amber-700">{{ __('ui.nav.register') }}</a>
+                @endguest
             </span>
         </nav>
     </header>
+
+    @auth
+        @unless (auth()->user()->hasVerifiedEmail())
+            <div class="mx-auto mt-4 max-w-7xl px-4">
+                <div class="rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+                    {{ __('ui.auth.unverified_banner') }} <a href="{{ route('verification.notice') }}" class="underline">{{ __('ui.auth.verify_link') }}</a>
+                </div>
+            </div>
+        @endunless
+    @endauth
 
     {{-- Flash area: messages put into the session with ->with('status', '...'). --}}
     @if (session('status'))

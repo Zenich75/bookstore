@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Slow Request Threshold
+    |--------------------------------------------------------------------------
+    |
+    | Requests slower than this many milliseconds are logged by the
+    | terminable LogSlowRequests middleware (see docs/07-middleware-auth.md).
+    |
+    */
+
+    'slow_request_ms' => (int) env('SLOW_REQUEST_MS', 1000),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

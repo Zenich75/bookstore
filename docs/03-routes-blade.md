@@ -31,11 +31,11 @@
 | Invokable-контролер | `Route::get('/', HomeController::class)` | одна дія → `__invoke()` |
 | Ресурс з обмеженням | `Route::resource('books', …)->only(['index', 'show'])` | імена `books.index`, `books.show` |
 | Прив’язка за стовпцем | `->scoped(['book' => 'slug'])`, `{author:slug}`, `{genre:slug}` | `route('books.show', $book)` сам підставляє слаг |
-| Прив’язка за id (типово) | `/warehouses/{warehouse}`, `/admin/books/{book}` | під капотом `Model::findOrFail($id)` |
+| Прив’язка за id (типово) | `/warehouses/{warehouse}` (з етапу 7 — `/manage/warehouses/{warehouse}/stocks`), `/admin/books/{book}` | під капотом `Model::findOrFail($id)` |
 | Контролерна група | `Route::controller(AuthorController::class)->group(…)` | дії вказуються як `'index'`, `'show'` |
 | Вкладена прив’язка (scoped binding) | `/authors/{author:slug}/books/{book:slug}` + `->scopeBindings()` | дочірня модель шукається через `$author->books()` → 404, якщо не пов’язана |
 | `withTrashed()` | `admin.books.show` | м’яко видалені моделі знаходяться; публічні маршрути повертають 404 |
-| Групи з префіксом та іменем | `prefix('admin')->name('admin.')`, `prefix('lab')->name('lab.')` | проміжне ПЗ (middleware) для адмінки — на етапі 7 |
+| Групи з префіксом та іменем | `prefix('admin')->name('admin.')`, `prefix('lab')->name('lab.')` | проміжне ПЗ (middleware) для адмінки — етап 7, [07-middleware-auth.md](07-middleware-auth.md) |
 | Маршрут-представлення | `Route::view('/about', 'about')` | контролер не потрібен |
 | Перенаправлення | `genres.show` → `redirect()->route('books.index', ['genre' => …])` | «сторінка» жанру — це відфільтрований каталог |
 | Резервний маршрут | `Route::fallback(…)` | останній маршрут; рендерить `errors/404` |

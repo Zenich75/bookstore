@@ -89,18 +89,33 @@ test('author page (authors.show) with books in every role', function () {
     );
 });
 
-test('warehouse page (warehouses.show)', function () {
+test('manage: warehouse stock list and movements (as the warehouse manager)', function () {
+    $seed = function (int $n) {
+        $warehouse = Warehouse::factory()->create();
+        $this->actingAs(User::factory()->manager()->create(['warehouse_id' => $warehouse->id]));
+
+        // attach() fires StockObserver: one movement per book as well.
+        Book::factory()->count($n)->create()
+            ->each(fn (Book $book) => $warehouse->books()->attach($book, ['quantity' => 3, 'shelf_code' => 'A-01-1']));
+
+        return $warehouse;
+    };
+
+    expectConstantQueries($seed, fn (Warehouse $warehouse) => $this->get(route('manage.warehouses.stocks.index', $warehouse)));
+    expectConstantQueries($seed, fn (Warehouse $warehouse) => $this->get(route('manage.warehouses.movements.index', $warehouse)));
+});
+
+test('admin: book list (with trashed) and pending reviews', function () {
+    asAdmin();
+
     expectConstantQueries(
-        function (int $n) {
-            $warehouse = Warehouse::factory()->create();
-            User::factory()->manager()->create(['warehouse_id' => $warehouse->id]);
+        fn (int $n) => Book::factory()->count($n)->create()->each(fn (Book $book, int $i) => $i % 3 === 0 ? $book->delete() : null),
+        fn () => $this->get(route('admin.books.index', ['trashed' => 'with'])),
+    );
 
-            Book::factory()->count($n)->create()
-                ->each(fn (Book $book) => $warehouse->books()->attach($book, ['quantity' => 3, 'shelf_code' => 'A-01-1']));
-
-            return $warehouse;
-        },
-        fn (Warehouse $warehouse) => $this->get(route('warehouses.show', $warehouse)),
+    expectConstantQueries(
+        fn (int $n) => Review::factory()->count($n)->create(), // pending by default
+        fn () => $this->get(route('admin.reviews.index')),
     );
 });
 
@@ -118,9 +133,11 @@ test('index pages (authors, warehouses)', function () {
         fn () => $this->get(route('authors.index')),
     );
 
+    asAdmin(); // the admin sees every warehouse
+
     expectConstantQueries(
         fn (int $n) => Warehouse::factory()->count($n)->create()
             ->each(fn (Warehouse $w) => User::factory()->manager()->create(['warehouse_id' => $w->id])),
-        fn () => $this->get(route('warehouses.index')),
+        fn () => $this->get(route('manage.warehouses.index')),
     );
 });

@@ -82,6 +82,13 @@
 | view composer | компонувальник представлення (view composer) |
 | fallback route | резервний маршрут (fallback) |
 | middleware | проміжне ПЗ (middleware) |
+| terminable middleware | термінальне middleware (terminate()) |
+| authentication / authorization | автентифікація / авторизація |
+| gate / policy | гейт / політика (policy) |
+| email verification | підтвердження електронної пошти |
+| signed URL | підписаний URL |
+| rate limiting | обмеження частоти (rate limiting) |
+| IDOR | IDOR (підміна ідентифікатора в URL) |
 | queue / job | черга / задача (job) |
 | foreign key | зовнішній ключ |
 | index | індекс |

@@ -112,6 +112,7 @@ test('ApprovedScope hides pending reviews; withoutGlobalScope shows them', funct
 });
 
 test('admin book page shows pending reviews (withoutGlobalScope)', function () {
+    asAdmin();
     $book = Book::factory()->create();
     Review::factory()->approved()->for($book)->create();
     Review::factory()->count(2)->for($book)->create();

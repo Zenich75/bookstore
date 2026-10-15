@@ -12,7 +12,7 @@
     </div>
 
     @isset($footer)
-        <div class="border-t border-stone-200 px-4 py-2 text-sm text-stone-500">
+        <div {{ $footer->attributes->merge(['class' => 'border-t border-stone-200 px-4 py-2 text-sm text-stone-500']) }}>
             {{ $footer }}
         </div>
     @endisset

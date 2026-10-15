@@ -6,6 +6,8 @@ use App\Enums\ImageType;
 use App\Enums\StockMovementReason;
 use App\Enums\UserRole;
 use App\Models\Book;
+use App\Models\User;
+use App\Models\Warehouse;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Arr;
 
@@ -26,16 +28,32 @@ test('pages render in Ukrainian without untranslated keys', function () {
     $book = Book::has('authors')->orderBy('id')->first();
     $author = $book->authors()->first();
 
-    $urls = [
+    $guestUrls = [route('home'), route('login'), route('register'), route('books.show', $book), '/no-such-page'];
+
+    $warehouse = Warehouse::has('stocks')->orderBy('id')->first();
+    $adminUrls = [
         route('home'), route('books.index'), route('books.index', ['in_stock' => 1, 'format' => 'ebook', 'sort' => 'rating']),
         route('books.show', $book), route('authors.index'), route('authors.show', $author),
-        route('authors.books.show', [$author, $book]), route('genres.index'), route('warehouses.index'),
-        route('warehouses.show', 1), route('about'), route('admin.dashboard'), route('admin.books.show', $book),
+        route('authors.books.show', [$author, $book]), route('genres.index'), route('about'),
+        route('manage.warehouses.index'), route('manage.warehouses.stocks.index', $warehouse),
+        route('manage.warehouses.stocks.edit', [$warehouse, $warehouse->stocks()->first()]),
+        route('manage.warehouses.movements.index', $warehouse),
+        route('admin.dashboard'), route('admin.books.index'), route('admin.books.create'), route('admin.books.show', $book),
+        route('admin.books.edit', $book), route('admin.reviews.index'),
         route('lab.relations'), route('lab.n-plus-one'), route('lab.n-plus-one', ['variant' => 'strict']),
         route('lab.collections'), route('lab.models'), route('reports.stock'), route('reports.top-authors'), '/no-such-page',
     ];
 
-    foreach ($urls as $url) {
+    $unverified = User::factory()->unverified()->create();
+    $urls = [
+        ...array_map(fn ($url) => [null, $url], $guestUrls),
+        [$unverified, route('verification.notice')],
+        ...array_map(fn ($url) => [User::where('email', 'admin@example.com')->first(), $url], $adminUrls),
+    ];
+
+    foreach ($urls as [$user, $url]) {
+        $user ? $this->actingAs($user) : auth()->logout();
+
         $html = preg_replace('#<script\b.*?</script>#s', '', $this->get($url)->getContent());
 
         expect($html)

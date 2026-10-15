@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Auth;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\GenreController;
@@ -9,8 +10,10 @@ use App\Http\Controllers\Lab\LabCollectionsController;
 use App\Http\Controllers\Lab\LabModelsController;
 use App\Http\Controllers\Lab\LabNPlusOneController;
 use App\Http\Controllers\Lab\LabRelationsController;
+use App\Http\Controllers\Manage;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\WarehouseController;
+use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use Illuminate\Support\Facades\Route;
 
 // Invokable controller: a single __invoke() action, referenced by class name.
@@ -36,31 +39,97 @@ Route::controller(AuthorController::class)->prefix('authors')->name('authors.')-
 Route::get('/genres', [GenreController::class, 'index'])->name('genres.index');
 Route::get('/genres/{genre:slug}', [GenreController::class, 'show'])->name('genres.show');
 
-// Default implicit binding by primary key: /warehouses/{warehouse} => id.
-Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
-Route::get('/warehouses/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
-
 // View route (no controller); the page uses the legacy @extends layout for comparison.
 Route::view('/about', 'about')->name('about');
 
-// Admin area. Middleware (auth + admin role) is added in stage 7.
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', Admin\DashboardController::class)->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Authentication (hand-written controllers, no starter kit)
+|--------------------------------------------------------------------------
+| Route names login / verification.* are what the "auth" and "verified"
+| middleware and the VerifyEmail notification redirect/link to.
+*/
 
-    // withTrashed(): soft-deleted books still resolve (public routes return 404 for them).
-    Route::get('/books/{book}', [Admin\BookController::class, 'show'])->name('books.show')->withTrashed();
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [Auth\RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register', [Auth\RegisteredUserController::class, 'store']);
+
+    Route::get('/login', [Auth\AuthenticatedSessionController::class, 'create'])->name('login');
+    // Named rate limiter "login" (AppServiceProvider): 5 attempts/min per email + IP.
+    Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
 });
 
-// Reports: one invokable controller, the report name comes from ->defaults().
-// Access is restricted to managers/admins in stage 7.
-Route::prefix('reports')->name('reports.')->group(function () {
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::get('/email/verify', [Auth\EmailVerificationController::class, 'notice'])->name('verification.notice');
+    // "signed": the URL carries an HMAC signature + expiry; tampering => 403.
+    Route::get('/email/verify/{id}/{hash}', [Auth\EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/verification-notification', [Auth\EmailVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')->name('verification.send');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Staff area: managers and admins
+|--------------------------------------------------------------------------
+| Middleware run in order: auth (logged in) -> verified (email confirmed)
+| -> role (manager or admin). Warehouse routes add warehouse.access.
+*/
+
+Route::prefix('manage')->name('manage.')->middleware(['auth', 'verified', 'role:manager,admin'])->group(function () {
+    Route::get('/warehouses', [Manage\WarehouseController::class, 'index'])->name('warehouses.index');
+
+    // {warehouse} binds by id; warehouse.access: a manager only gets their own one.
+    Route::prefix('/warehouses/{warehouse}')->name('warehouses.')->middleware('warehouse.access')->group(function () {
+        Route::get('/stocks', [Manage\StockController::class, 'index'])->name('stocks.index');
+        Route::get('/movements', [Manage\MovementController::class, 'index'])->name('movements.index');
+
+        // scopeBindings(): {stock} is looked up via $warehouse->stocks(), so
+        // /warehouses/1/stocks/{id of a stock in warehouse 2}/edit is a 404 (IDOR protection);
+        // can:update,stock then asks StockPolicy about the row itself.
+        Route::scopeBindings()->middleware('can:update,stock')->group(function () {
+            Route::get('/stocks/{stock}/edit', [Manage\StockController::class, 'edit'])->name('stocks.edit');
+            Route::put('/stocks/{stock}', [Manage\StockController::class, 'update'])->name('stocks.update');
+        });
+    });
+});
+
+// Reports: invokable controller, the report name comes from ->defaults().
+// A gate (view-reports) rather than role:manager,admin: the rule lives in one place
+// and the same check drives the navigation link (@can('view-reports')).
+Route::prefix('reports')->name('reports.')->middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/stock', ReportController::class)->defaults('report', 'stock')->name('stock');
     Route::get('/stock.csv', ReportController::class)->defaults('report', 'stock-csv')->name('stock-csv');
     Route::get('/top-authors', ReportController::class)->defaults('report', 'top-authors')->name('top-authors');
 });
 
-// Lab pages (stage demos).
-Route::prefix('lab')->name('lab.')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Admin area
+|--------------------------------------------------------------------------
+*/
+
+// Moderation works on pending reviews, which ApprovedScope hides from the
+// default route model binding — resolve {review} without it.
+Route::bind('review', fn (string $value) => Review::withoutGlobalScope(ApprovedScope::class)->findOrFail($value));
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::get('/', Admin\DashboardController::class)->name('dashboard');
+
+    // withTrashed(['show']): soft-deleted books still open in the admin (public routes: 404).
+    Route::resource('books', Admin\BookController::class)->withTrashed(['show']);
+    Route::patch('/books/{book}/restore', [Admin\BookController::class, 'restore'])->name('books.restore')->withTrashed();
+    Route::delete('/books/{book}/force', [Admin\BookController::class, 'forceDelete'])->name('books.force-delete')->withTrashed();
+
+    Route::get('/reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('/reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
+    Route::delete('/reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
+});
+
+// Lab pages (stage demos): local/testing, or admins elsewhere (LabAccess).
+Route::prefix('lab')->name('lab.')->middleware('lab')->group(function () {
     Route::get('/relations', LabRelationsController::class)->name('relations');
     Route::get('/n-plus-one', LabNPlusOneController::class)->name('n-plus-one');
     Route::get('/collections', LabCollectionsController::class)->name('collections');

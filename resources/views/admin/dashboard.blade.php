@@ -1,7 +1,19 @@
 <x-layouts.app :title="__('ui.admin.title')">
-    <p class="mb-4 rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-        {{ __('ui.admin.placeholder') }}
-    </p>
+    <div class="mb-6 grid gap-4 md:grid-cols-3">
+        <x-card>
+            <x-slot:header>{{ __('ui.admin.books_title') }}</x-slot:header>
+            <a href="{{ route('admin.books.index') }}" class="text-amber-700 hover:underline">{{ __('ui.admin.all_books') }}</a> ·
+            <a href="{{ route('admin.books.create') }}" class="text-amber-700 hover:underline">{{ __('ui.admin.new_book') }}</a>
+        </x-card>
+        <x-card>
+            <x-slot:header>{{ __('ui.admin.reviews_title') }}</x-slot:header>
+            <a href="{{ route('admin.reviews.index') }}" class="text-amber-700 hover:underline">{{ trans_choice('ui.admin.pending_count', $pendingReviews, ['count' => Number::format($pendingReviews)]) }}</a>
+        </x-card>
+        <x-card>
+            <x-slot:header>{{ __('ui.nav.manage') }}</x-slot:header>
+            <a href="{{ route('manage.warehouses.index') }}" class="text-amber-700 hover:underline">{{ __('ui.warehouses.title') }}</a>
+        </x-card>
+    </div>
 
     <x-card>
         <x-slot:header>{{ __('ui.admin.recently_deleted') }}</x-slot:header>
@@ -13,5 +25,6 @@
                 <li class="text-stone-500">{{ __('ui.admin.no_trashed') }}</li>
             @endforelse
         </ul>
+        <x-slot:footer><a href="{{ route('admin.books.index', ['trashed' => 'only']) }}" class="text-amber-700 hover:underline">{{ __('ui.admin.trash') }}</a></x-slot:footer>
     </x-card>
 </x-layouts.app>

@@ -7,3 +7,19 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Form controls and buttons used by the auth, manage and admin pages (stage 7). */
+@layer components {
+    .form-input {
+        @apply w-full rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-amber-500 focus:outline-none;
+    }
+    .btn {
+        @apply inline-flex items-center rounded bg-amber-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-amber-700;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center rounded border border-stone-300 bg-white px-3 py-1 text-sm text-stone-700 hover:bg-stone-100;
+    }
+    .btn-danger {
+        @apply inline-flex items-center rounded border border-red-300 bg-white px-3 py-1 text-sm text-red-700 hover:bg-red-50;
+    }
+}

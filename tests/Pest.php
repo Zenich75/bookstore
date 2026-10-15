@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -24,6 +26,34 @@ pest()->extend(TestCase::class)
 | Helpers
 |--------------------------------------------------------------------------
 */
+
+/**
+ * Log in as a verified user of the given role (factories set email_verified_at).
+ */
+function asAdmin(): User
+{
+    test()->actingAs($user = User::factory()->admin()->create());
+
+    return $user;
+}
+
+/**
+ * A manager of $warehouse (a new warehouse when omitted).
+ */
+function asManager(?Warehouse $warehouse = null): User
+{
+    $state = $warehouse ? ['warehouse_id' => $warehouse->id] : [];
+    test()->actingAs($user = User::factory()->manager()->create($state));
+
+    return $user;
+}
+
+function asReader(): User
+{
+    test()->actingAs($user = User::factory()->create());
+
+    return $user;
+}
 
 /**
  * N+1 regression guard: seed 5 and then 30 related records (each inside a
