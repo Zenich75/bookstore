@@ -36,6 +36,8 @@
             <span class="ml-auto flex gap-4 text-sm text-stone-500">
                 <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">Lab: relations</a>
                 <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">Lab: N+1</a>
+                <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">Lab: collections</a>
+                <a href="{{ route('reports.stock') }}" class="hover:text-amber-700">Reports</a>
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-700">Admin</a>
             </span>
         </nav>

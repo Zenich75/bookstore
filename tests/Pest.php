@@ -35,7 +35,16 @@ pest()->extend(TestCase::class)
  */
 function expectConstantQueries(Closure $seed, Closure $request): void
 {
-    $counts = [];
+    // Count via a listener, not the query log: code under test (e.g. the lab's
+    // QueryProfiler) may flush or disable the query log itself.
+    $recording = false;
+    $queries = [];
+    DB::listen(function ($query) use (&$recording, &$queries) {
+        if ($recording) {
+            $queries[] = $query->sql;
+        }
+    });
+
     $logs = [];
 
     foreach ([5, 30] as $size) {
@@ -44,21 +53,21 @@ function expectConstantQueries(Closure $seed, Closure $request): void
         try {
             $context = $seed($size);
 
-            DB::flushQueryLog();
-            DB::enableQueryLog();
+            $queries = [];
+            $recording = true;
             $request($context)->assertOk();
-            $logs[$size] = array_column(DB::getQueryLog(), 'query');
-            $counts[$size] = count($logs[$size]);
-            DB::disableQueryLog();
+            $recording = false;
+            $logs[$size] = $queries;
         } finally {
+            $recording = false;
             DB::rollBack();
         }
     }
 
-    expect($counts[30])->toBe($counts[5], sprintf(
+    expect(count($logs[30]))->toBe(count($logs[5]), sprintf(
         "Query count grows with data (%d with 5 records, %d with 30) — likely N+1. Extra queries:\n%s",
-        $counts[5],
-        $counts[30],
+        count($logs[5]),
+        count($logs[30]),
         implode("\n", array_slice(array_diff_assoc($logs[30], $logs[5]), 0, 5)),
     ));
 }

@@ -5,8 +5,10 @@ use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\GenreController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Lab\LabCollectionsController;
 use App\Http\Controllers\Lab\LabNPlusOneController;
 use App\Http\Controllers\Lab\LabRelationsController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,10 +50,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/books/{book}', [Admin\BookController::class, 'show'])->name('books.show')->withTrashed();
 });
 
+// Reports: one invokable controller, the report name comes from ->defaults().
+// Access is restricted to managers/admins in stage 7.
+Route::prefix('reports')->name('reports.')->group(function () {
+    Route::get('/stock', ReportController::class)->defaults('report', 'stock')->name('stock');
+    Route::get('/stock.csv', ReportController::class)->defaults('report', 'stock-csv')->name('stock-csv');
+    Route::get('/top-authors', ReportController::class)->defaults('report', 'top-authors')->name('top-authors');
+});
+
 // Lab pages (stage demos).
 Route::prefix('lab')->name('lab.')->group(function () {
     Route::get('/relations', LabRelationsController::class)->name('relations');
     Route::get('/n-plus-one', LabNPlusOneController::class)->name('n-plus-one');
+    Route::get('/collections', LabCollectionsController::class)->name('collections');
 });
 
 // Any unmatched URL => our custom 404 page (instead of the framework's default).

@@ -12,11 +12,7 @@ use App\Models\StockMovement;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Warehouse;
-use BackedEnum;
 use Closure;
-use DateTimeInterface;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -80,7 +76,7 @@ final class RelationExamples
         }
 
         try {
-            $result = $this->present(($example->run)($samples));
+            $result = Presenter::present(($example->run)($samples));
         } catch (MissingSample $e) {
             $skipped = $e->getMessage();
         } catch (Throwable $e) {
@@ -111,25 +107,6 @@ final class RelationExamples
             'skipped' => $skipped,
             'queries' => $queries,
         ];
-    }
-
-    /**
-     * Turn models/collections into plain arrays for display.
-     * Uses only loaded data (toArray), never triggers queries.
-     */
-    private function present(mixed $value): mixed
-    {
-        return match (true) {
-            $value instanceof Model => $value->toArray(),
-            $value instanceof Collection => [
-                'count' => $value->count(),
-                'items' => $value->take(5)->map(fn ($item) => $this->present($item))->values()->all(),
-            ],
-            is_array($value) => array_map(fn ($item) => $this->present($item), $value),
-            $value instanceof BackedEnum => $value->value,
-            $value instanceof DateTimeInterface => $value->format('Y-m-d H:i:s'),
-            default => $value,
-        };
     }
 
     /**

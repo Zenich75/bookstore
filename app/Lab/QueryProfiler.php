@@ -95,10 +95,12 @@ final class QueryProfiler
      */
     public static function normalize(string $sql): string
     {
-        $sql = preg_replace('/\bin\s*\(\s*(?:\?|\d+|\'[^\']*\')(?:\s*,\s*(?:\?|\d+|\'[^\']*\'))*\s*\)/i', 'in (…)', $sql);
-        $sql = preg_replace("/'(?:[^'\\\\]|\\\\.)*'/", '?', $sql);
-        $sql = preg_replace('/(?<![\w`".])\d+(?:\.\d+)?(?![\w`"])/', '?', $sql);
+        // Possessive quantifiers (++): eager loads can inline 50k ids, and a backtracking
+        // pattern would hit PCRE's backtrack limit (preg_replace() then returns null).
+        $sql = preg_replace('/\bin\s*\((?:[\s,?\d]|\'[^\']*+\')++\)/i', 'in (…)', $sql) ?? $sql;
+        $sql = preg_replace("/'(?:[^'\\\\]|\\\\.)*+'/", '?', $sql) ?? $sql;
+        $sql = preg_replace('/(?<![\w`".])\d+(?:\.\d+)?(?![\w`"])/', '?', $sql) ?? $sql;
 
-        return preg_replace('/\s+/', ' ', trim($sql));
+        return preg_replace('/\s+/', ' ', trim($sql)) ?? $sql;
     }
 }

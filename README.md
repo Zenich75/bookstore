@@ -39,6 +39,8 @@ Tip: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 | Mailpit | <http://localhost:8025> |
 | Relations lab | <http://localhost/lab/relations> |
 | N+1 lab | <http://localhost/lab/n-plus-one> |
+| Collections lab | <http://localhost/lab/collections> |
+| Reports | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
 | MySQL (host) | `127.0.0.1:3307`, user `sail` / `password` |
 
 Useful commands:
@@ -61,7 +63,7 @@ Useful commands:
 | 2 | Eloquent relationships, custom pivot, morph map, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
 | 3 | Routes (bindings, scoped, withTrashed, groups, fallback), Blade layouts & components, catalog | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
 | 4 | N+1: strict mode, profiler, 19-variant lab, constant-query tests | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
-| 5 | _TBD_ | |
+| 5 | Collections vs Query Builder, chunking/lazy/cursor, reports, CSV streaming | [docs/05-collections.md](docs/05-collections.md) |
 | 6 | _TBD_ | |
 | 7 | _TBD_ | |
 | 8 | _TBD_ | |
