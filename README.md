@@ -36,6 +36,7 @@ Tip: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 |---|---|
 | App | <http://localhost> |
 | Mailpit | <http://localhost:8025> |
+| Relations lab | <http://localhost/lab/relations> |
 | MySQL (host) | `127.0.0.1:3307`, user `sail` / `password` |
 
 Useful commands:
@@ -55,7 +56,7 @@ Useful commands:
 |---|---|---|
 | 0 | Project setup: Sail, Debugbar, strict mode, database queue | [docs/00-setup.md](docs/00-setup.md) |
 | 1 | Schema, models (PHP attributes), enums, factories, seeders | [docs/01-schema.md](docs/01-schema.md) |
-| 2 | _TBD_ | |
+| 2 | Eloquent relationships, custom pivot, morph map, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
 | 3 | _TBD_ | |
 | 4 | _TBD_ | |
 | 5 | _TBD_ | |

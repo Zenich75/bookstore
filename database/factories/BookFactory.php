@@ -2,9 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Enums\AuthorRole;
 use App\Enums\BookFormat;
+use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\Review;
+use App\Models\Warehouse;
 use Database\Factories\Concerns\GeneratesUniqueValues;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
@@ -66,5 +70,49 @@ class BookFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'format' => $format->value,
         ]);
+    }
+
+    /**
+     * Attach reviews via the reviews() hasMany relation.
+     */
+    public function withReviews(int $count = 3): static
+    {
+        return $this->has(Review::factory()->count($count), 'reviews');
+    }
+
+    /**
+     * Attach authors via the authors() belongsToMany relation (pivot role + sort_order).
+     */
+    public function withAuthors(int $count = 1): static
+    {
+        return $this->hasAttached(
+            Author::factory()->count($count),
+            // Called once per attached author: the first becomes the main author.
+            function (Book $book) {
+                $position = $book->authors()->count();
+
+                return [
+                    'role' => ($position === 0 ? AuthorRole::Author : AuthorRole::CoAuthor)->value,
+                    'sort_order' => $position,
+                ];
+            },
+            'authors',
+        );
+    }
+
+    /**
+     * Stock the book in new warehouses via the warehouses() relation (Stock pivot).
+     */
+    public function inWarehouses(int $count = 1): static
+    {
+        return $this->hasAttached(
+            Warehouse::factory()->count($count),
+            fn () => [
+                'quantity' => fake()->numberBetween(0, 100),
+                'reserved' => 0,
+                'shelf_code' => fake()->bothify('?-##-#'),
+            ],
+            'warehouses',
+        );
     }
 }

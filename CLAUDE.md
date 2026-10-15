@@ -28,6 +28,10 @@ Always run app commands through Sail: `./vendor/bin/sail artisan ...`, `./vendor
 - Eloquent strict mode (`Model::shouldBeStrict()`) is on by default, controlled by `MODEL_STRICT`
   (`config('app.model_strict')`). Do not remove it; lessons that need lazy loading (N+1 demo)
   toggle the flag instead.
+- Relationship methods have return types and `@return Relation<Related, $this>` generics docblocks.
+  Load relations explicitly (`with`/`load`/relation query) — never rely on lazy loading.
+- Polymorphic types use `Relation::enforceMorphMap()` (AppServiceProvider): every new morphable
+  model must get an alias there; data migrations use plain alias/class strings, not `::class`.
 
 ## Lessons & docs
 

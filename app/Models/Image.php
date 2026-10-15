@@ -7,6 +7,7 @@ use Database\Factories\ImageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 #[Fillable(['imageable_type', 'imageable_id', 'path', 'type', 'sort_order'])]
 class Image extends Model
@@ -22,5 +23,15 @@ class Image extends Model
         return [
             'type' => ImageType::class,
         ];
+    }
+
+    /**
+     * The owner: a Book or an Author (resolved via the morph map).
+     *
+     * @return MorphTo<Model, $this>
+     */
+    public function imageable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }
