@@ -20,9 +20,10 @@ class HomeController extends Controller
                 __('ui.home.stats.books') => Book::count(),
                 __('ui.home.stats.authors') => Author::count(),
                 __('ui.home.stats.warehouses') => Warehouse::count(),
-                __('ui.home.stats.approved_reviews') => Review::where('is_approved', true)->count(),
+                // ApprovedScope (global) already limits this to approved reviews.
+                __('ui.home.stats.approved_reviews') => Review::count(),
             ],
-            'latestBooks' => BookController::cardQuery()
+            'latestBooks' => Book::withCardData()
                 ->whereNotNull('published_at')
                 ->latest('published_at')
                 ->limit(8)

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
+    // Mutes the event dispatcher for the whole seeding run: even Model::create()
+    // fires no events, so HasSlug, StockObserver etc. do not run — seeders set
+    // slugs and write stock movements themselves (see docs/06-attributes-casts.md).
     use WithoutModelEvents;
 
     /**

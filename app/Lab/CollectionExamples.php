@@ -9,8 +9,10 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\Profile;
 use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use App\Models\Stock;
 use App\Reports\StockByWarehouseGenreReport;
+use App\ValueObjects\Money;
 use Closure;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Arr;
@@ -179,6 +181,7 @@ final class CollectionExamples
     {
         return match (true) {
             $value instanceof \UnitEnum => $value::class.'::'.$value->name,
+            $value instanceof Money => $value::class.' '.$value->format(),
             $value instanceof \DateTimeInterface => $value::class.' '.$value->format('Y-m-d H:i'),
             is_string($value) => 'string '.var_export(Str::limit($value, 40), true),
             default => get_debug_type($value).' '.var_export($value, true),
@@ -319,7 +322,7 @@ final class CollectionExamples
                 self::approach(__('lab.collections.labels.by_key'), function () {
                     $first = Book::orderBy('id')->limit(10)->get();
                     $second = Book::orderBy('id')->offset(5)->limit(10)->get();
-                    $second->first()->price += 1; // in memory only
+                    $second->first()->price = $second->first()->price->add(Money::fromCents(1)); // in memory only
 
                     return [
                         'diff' => $first->diff($second)->modelKeys(),
@@ -331,7 +334,7 @@ final class CollectionExamples
                 self::approach(__('lab.collections.labels.by_value'), function () {
                     $first = Book::orderBy('id')->limit(10)->get()->toBase();
                     $second = Book::orderBy('id')->offset(5)->limit(10)->get()->toBase();
-                    $second->first()->price += 1; // in memory only
+                    $second->first()->price = $second->first()->price->add(Money::fromCents(1)); // in memory only
 
                     return [
                         'diff' => $first->diff($second)->pluck('id')->all(),
@@ -437,12 +440,12 @@ final class CollectionExamples
                         ->first();
                 }),
                 self::approach(__('lab.collections.labels.collection'), function () {
-                    $books = Book::get(['price']);
+                    $cents = Book::get(['price'])->map(fn (Book $book) => $book->price->cents);
 
                     return [
-                        'avg_price' => $books->avg('price'),
-                        'total_price' => $books->sum('price'),
-                        'max_price' => $books->max('price'),
+                        'avg_price' => $cents->avg(),
+                        'total_price' => $cents->sum(),
+                        'max_price' => $cents->max(),
                     ];
                 }),
             ], heavy: true);
@@ -484,12 +487,12 @@ final class CollectionExamples
             __('lab.collections.comparisons.large_d'),
             [
                 self::approach(__('lab.collections.labels.baseline'), function () {
-                    return Book::get()->where('format', BookFormat::Ebook)->sum('price');
+                    return Book::get()->where('format', BookFormat::Ebook)->sum('price.cents');
                 }),
                 self::approach('chunk(1000)', function () {
                     $sum = 0;
                     Book::chunk(1000, function ($books) use (&$sum) {
-                        $sum += $books->where('format', BookFormat::Ebook)->sum('price');
+                        $sum += $books->where('format', BookFormat::Ebook)->sum('price.cents');
                     });
 
                     return $sum;
@@ -497,7 +500,7 @@ final class CollectionExamples
                 self::approach('chunkById(1000)', function () {
                     $sum = 0;
                     Book::chunkById(1000, function ($books) use (&$sum) {
-                        $sum += $books->where('format', BookFormat::Ebook)->sum('price');
+                        $sum += $books->where('format', BookFormat::Ebook)->sum('price.cents');
                     });
 
                     return $sum;
@@ -505,7 +508,7 @@ final class CollectionExamples
                 self::approach('lazy(1000)', function () {
                     $sum = 0;
                     foreach (Book::lazy(1000) as $book) {
-                        $sum += $book->format === BookFormat::Ebook ? $book->price : 0;
+                        $sum += $book->format === BookFormat::Ebook ? $book->price->cents : 0;
                     }
 
                     return $sum;
@@ -513,7 +516,7 @@ final class CollectionExamples
                 self::approach('lazyById(1000)', function () {
                     $sum = 0;
                     foreach (Book::lazyById(1000) as $book) {
-                        $sum += $book->format === BookFormat::Ebook ? $book->price : 0;
+                        $sum += $book->format === BookFormat::Ebook ? $book->price->cents : 0;
                     }
 
                     return $sum;
@@ -521,7 +524,7 @@ final class CollectionExamples
                 self::approach('cursor()', function () {
                     $sum = 0;
                     foreach (Book::cursor() as $book) {
-                        $sum += $book->format === BookFormat::Ebook ? $book->price : 0;
+                        $sum += $book->format === BookFormat::Ebook ? $book->price->cents : 0;
                     }
 
                     return $sum;
@@ -542,26 +545,26 @@ final class CollectionExamples
             __('lab.collections.comparisons.chunk_pitfall_d'),
             [
                 self::approach('chunk(100)', function () {
-                    $before = Review::where('is_approved', false)->count();
+                    $before = Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->count();
 
                     $chunks = 0;
-                    Review::where('is_approved', false)->chunk(100, function ($reviews) use (&$chunks) {
+                    Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->chunk(100, function ($reviews) use (&$chunks) {
                         $reviews->toQuery()->update(['is_approved' => true]);
                         $chunks++;
                     });
 
-                    return ['unapproved_before' => $before, 'chunks' => $chunks, 'unapproved_after' => Review::where('is_approved', false)->count()];
+                    return ['unapproved_before' => $before, 'chunks' => $chunks, 'unapproved_after' => Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->count()];
                 }),
                 self::approach('chunkById(100)', function () {
-                    $before = Review::where('is_approved', false)->count();
+                    $before = Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->count();
 
                     $chunks = 0;
-                    Review::where('is_approved', false)->chunkById(100, function ($reviews) use (&$chunks) {
+                    Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->chunkById(100, function ($reviews) use (&$chunks) {
                         $reviews->toQuery()->update(['is_approved' => true]);
                         $chunks++;
                     });
 
-                    return ['unapproved_before' => $before, 'chunks' => $chunks, 'unapproved_after' => Review::where('is_approved', false)->count()];
+                    return ['unapproved_before' => $before, 'chunks' => $chunks, 'unapproved_after' => Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->count()];
                 }),
             ], writes: true, heavy: true);
     }
@@ -592,7 +595,7 @@ final class CollectionExamples
                     $before = $books->pluck('updated_at', 'id');
 
                     $books->each(function (Book $book) {
-                        $book->price += 100;
+                        $book->price = $book->price->add(Money::fromUah(1));
                         $book->save();
                     });
 
@@ -646,7 +649,8 @@ final class CollectionExamples
                         ->where('reviews.is_approved', true))->count();
                 }),
                 self::approach('whereHas()', function () {
-                    return Book::whereHas('approvedReviews', fn ($query) => $query->where('rating', 5))->count();
+                    // reviews() is approved-only through Review's global ApprovedScope.
+                    return Book::whereHas('reviews', fn ($query) => $query->where('rating', 5))->count();
                 }),
             ]);
     }
@@ -678,7 +682,7 @@ final class CollectionExamples
                             'quantity' => $stocks->sum('quantity'),
                             'reserved' => $stocks->sum('reserved'),
                             'books' => $stocks->pluck('book_id')->unique()->count(),
-                            'value_cents' => $stocks->sum(fn (Stock $stock) => $stock->quantity * $stock->book->price),
+                            'value_cents' => $stocks->sum(fn (Stock $stock) => $stock->book->price->multiply($stock->quantity)->cents),
                         ])
                         ->sortKeys();
 

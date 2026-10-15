@@ -9,6 +9,7 @@ use App\Models\Genre;
 use App\Models\Image;
 use App\Models\Profile;
 use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use App\Models\Stock;
 use App\Models\StockMovement;
 use App\Models\Tag;
@@ -40,18 +41,18 @@ test('belongsTo: review user and book, manager warehouse, stock movement', funct
         ->and($movement->user->is($manager))->toBeTrue();
 });
 
-test('hasMany: user reviews and constrained approvedReviews', function () {
+test('hasMany: book and user reviews (approved only, via ApprovedScope)', function () {
     $book = Book::factory()->create();
     Review::factory()->count(2)->approved()->for($book)->create();
-    Review::factory()->for($book)->create();
+    Review::factory()->for($book)->create(); // pending
 
-    $book->load(['reviews', 'approvedReviews']);
+    $book->load('reviews');
 
-    expect($book->reviews)->toHaveCount(3)
-        ->and($book->approvedReviews)->toHaveCount(2)
-        ->and($book->approvedReviews->every->is_approved)->toBeTrue();
+    expect($book->reviews)->toHaveCount(2)
+        ->and($book->reviews->every->is_approved)->toBeTrue()
+        ->and($book->reviews()->withoutGlobalScope(ApprovedScope::class)->count())->toBe(3);
 
-    $user = User::factory()->has(Review::factory()->count(2))->create();
+    $user = User::factory()->has(Review::factory()->approved()->count(2))->create();
     expect($user->reviews()->count())->toBe(2);
 });
 
@@ -66,7 +67,7 @@ test('hasOne latestOfMany picks the newest review', function () {
 test('hasOne ofMany(rating, max) picks the best review, ties broken by highest id', function () {
     $book = Book::factory()->create();
     $ratings = [3, 5, 2, 5, 1];
-    $reviews = collect($ratings)->map(fn (int $rating) => Review::factory()->for($book)->create(['rating' => $rating]));
+    $reviews = collect($ratings)->map(fn (int $rating) => Review::factory()->approved()->for($book)->create(['rating' => $rating]));
 
     $best = Book::with('bestReview')->find($book->id)->bestReview;
 

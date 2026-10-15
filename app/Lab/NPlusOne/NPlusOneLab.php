@@ -169,7 +169,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -179,10 +179,10 @@ final class NPlusOneLab
             __('lab.n_plus_one.variants.count-in-php_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
-                    ->with(['authors', 'genre', 'cover', 'approvedReviews'])
+                    ->with(['authors', 'genre', 'cover', 'reviews'])
                     ->get();
 
-                // _card falls back to $book->approvedReviews->count() when there is no *_count attribute.
+                // _card falls back to $book->reviews->count() when there is no *_count attribute.
                 return $this->render($books);
             });
 
@@ -191,18 +191,18 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->get();
 
-                return $this->render($books, feed: 'approvedReviews');
+                return $this->render($books, feed: 'reviews');
             }, lazy: true);
 
         $this->add('feed-nested', 'g', __('lab.n_plus_one.variants.feed-nested'),
             __('lab.n_plus_one.variants.feed-nested_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
-                    ->with(['authors', 'genre', 'cover', 'approvedReviews.user.profile'])
-                    ->withCount('approvedReviews')
+                    ->with(['authors', 'genre', 'cover', 'reviews.user.profile'])
+                    ->withCount('reviews')
                     ->get();
 
-                return $this->render($books, feed: 'approvedReviews');
+                return $this->render($books, feed: 'reviews');
             });
 
         $this->add('feed-limited', 'h', __('lab.n_plus_one.variants.feed-limited'),
@@ -211,13 +211,13 @@ final class NPlusOneLab
                 $books = Book::whereIn('id', $ids)
                     ->with([
                         'authors', 'genre', 'cover',
-                        'approvedReviews' => fn ($query) => $query->latest('id')->limit(3),
-                        'approvedReviews.user.profile',
+                        'reviews' => fn ($query) => $query->latest('id')->limit(3),
+                        'reviews.user.profile',
                     ])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
-                return $this->render($books, feed: 'approvedReviews');
+                return $this->render($books, feed: 'reviews');
             });
 
         $this->add('load-missing', 'i', __('lab.n_plus_one.variants.load-missing'),
@@ -225,7 +225,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->get();
 
-                $books->load(['authors', 'genre', 'cover'])->loadCount('approvedReviews');
+                $books->load(['authors', 'genre', 'cover'])->loadCount('reviews');
                 $books->loadMissing(['authors', 'genre']); // already loaded: no queries
 
                 return $this->render($books);
@@ -257,7 +257,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'images', 'tags', 'genres', 'warehouses', 'stocks', 'reviews.user.profile'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -273,7 +273,7 @@ final class NPlusOneLab
                         'genre:id,name',
                         'cover:id,imageable_type,imageable_id,path',
                     ])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -289,7 +289,7 @@ final class NPlusOneLab
                         'genre:id,name',
                         'cover:id,imageable_type,imageable_id,path',
                     ])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -300,7 +300,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['genre', 'cover'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -311,7 +311,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books);
@@ -322,7 +322,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'labReviews.user.profile'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books, feed: 'labReviews', showReviewBook: true);
@@ -333,7 +333,7 @@ final class NPlusOneLab
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'labReviewsChaperoned.user.profile'])
-                    ->withCount('approvedReviews')
+                    ->withCount('reviews')
                     ->get();
 
                 return $this->render($books, feed: 'labReviewsChaperoned', showReviewBook: true);

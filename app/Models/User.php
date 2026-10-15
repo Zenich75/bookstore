@@ -14,8 +14,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'warehouse_id'])]
-#[Hidden(['password', 'remember_token'])]
+// role is NOT fillable: User::create($request->all()) must not let anyone become an admin.
+// Set it explicitly ($user->role = ...) where an admin assigns roles. See App\Lab\Models\LabUser.
+#[Fillable(['name', 'email', 'password', 'warehouse_id'])]
+// Never serialized (toArray/toJson, API responses): credentials and personal contact data.
+#[Hidden(['password', 'remember_token', 'email'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */

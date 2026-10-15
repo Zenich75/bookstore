@@ -40,6 +40,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | Лабораторія зв’язків | <http://localhost/lab/relations> |
 | Лабораторія N+1 | <http://localhost/lab/n-plus-one> |
 | Лабораторія колекцій | <http://localhost/lab/collections> |
+| Лабораторія моделей | <http://localhost/lab/models> |
 | Звіти | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
 | MySQL (з хоста) | `127.0.0.1:3307`, користувач `sail` / `password` |
 
@@ -65,7 +66,8 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 - Повідомлення фреймворку (`validation`, `auth`, `pagination`, `passwords`) — пакет
   `laravel-lang/common` (`php artisan lang:add uk`). Команда `lang:update` може перезаписати
   ручні правки в цих файлах.
-- Назви enum — метод `label()`; ціни — у гривнях: `Number::currency($kopecks / 100, in: 'UAH', locale: 'uk')`.
+- Назви enum — метод `label()`; ціни — у гривнях: `$book->price->format()` (об’єкт-значення `Money`,
+  у базі — копійки; для сирих сум зі звітів — `Money::fromCents($cents)->format()`).
 - Слаги завжди ASCII: `Str::slug($value, '-', 'uk')` («Тіні забутих предків» → `tini-zabutykh-predkiv`).
 
 ## Карта уроків
@@ -78,7 +80,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | 3 | Маршрути (прив’язки, scoped, withTrashed, групи, fallback), макети й компоненти Blade, каталог | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
 | 4 | N+1: суворий режим, профайлер, лабораторія з 19 варіантів, тести сталої кількості запитів | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
 | 5 | Колекції проти Query Builder, chunk/lazy/cursor, звіти, потокове CSV | [docs/05-collections.md](docs/05-collections.md) |
-| 6 | _буде згодом_ | |
+| 6 | Аксесори й мутатори, касти (`Money`, `encrypted`), серіалізація, локальні й глобальні скоупи, події та спостерігачі, масове присвоєння, `/lab/models` | [docs/06-attributes-casts.md](docs/06-attributes-casts.md) |
 | 7 | _буде згодом_ | |
 | 8 | _буде згодом_ | |
 | 9 | _буде згодом_ | |

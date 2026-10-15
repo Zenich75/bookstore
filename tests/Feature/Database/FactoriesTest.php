@@ -14,12 +14,15 @@ use App\Models\StockMovement;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\ValueObjects\Money;
+use Illuminate\Support\Collection;
 
 test('each model factory creates a persisted model', function (string $model) {
     $instance = $model::factory()->create();
 
     expect($instance->exists)->toBeTrue()
-        ->and($model::query()->whereKey($instance->getKey())->exists())->toBeTrue();
+        // withoutGlobalScopes(): a factory review is pending, ApprovedScope would hide it.
+        ->and($model::query()->withoutGlobalScopes()->whereKey($instance->getKey())->exists())->toBeTrue();
 })->with([
     User::class, Profile::class, Warehouse::class, Author::class, Genre::class,
     Book::class, Review::class, Image::class, Tag::class, StockMovement::class,
@@ -50,7 +53,7 @@ test('book factory states', function () {
         ->and($ebook->format)->toBe(BookFormat::Ebook);
 });
 
-test('book factory produces valid unique isbn-13, cents price and array meta', function () {
+test('book factory produces valid unique isbn-13, Money price and collection meta', function () {
     $books = Book::factory()->count(50)->make(['genre_id' => 1]);
 
     expect($books->pluck('isbn')->unique())->toHaveCount(50)
@@ -58,8 +61,9 @@ test('book factory produces valid unique isbn-13, cents price and array meta', f
 
     foreach ($books as $book) {
         expect($book->isbn)->toMatch('/^\d{13}$/')
-            ->and($book->price)->toBeInt()
-            ->and($book->meta)->toBeArray();
+            ->and($book->price)->toBeInstanceOf(Money::class)
+            ->and($book->getAttributes()['price'])->toBeInt()
+            ->and($book->meta)->toBeInstanceOf(Collection::class);
 
         $sum = 0;
         foreach (str_split($book->isbn) as $i => $digit) {

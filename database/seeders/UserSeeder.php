@@ -8,6 +8,7 @@ use App\Models\Warehouse;
 use Database\Seeders\Support\BulkInserts;
 use Database\Seeders\Support\SeedScale;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
@@ -44,11 +45,14 @@ class UserSeeder extends Seeder
                 }
             })());
 
-            // One profile per user.
+            // One profile per user. The Query Builder skips casts, so the "encrypted"
+            // cast of Profile::phone is applied by hand (encryptString = what the cast does).
             $this->insertChunked('profiles', (function () use ($now) {
                 foreach (DB::table('users')->select('id')->lazyById(1000) as $user) {
-                    yield Profile::factory()->raw(['user_id' => $user->id])
-                        + ['created_at' => $now, 'updated_at' => $now];
+                    $row = Profile::factory()->raw(['user_id' => $user->id]);
+                    $row['phone'] = $row['phone'] === null ? null : Crypt::encryptString($row['phone']);
+
+                    yield $row + ['created_at' => $now, 'updated_at' => $now];
                 }
             })());
         });

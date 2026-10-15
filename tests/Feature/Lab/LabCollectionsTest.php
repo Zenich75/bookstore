@@ -5,6 +5,7 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\Profile;
 use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use App\Models\Warehouse;
 use Database\Seeders\DatabaseSeeder;
 
@@ -46,7 +47,8 @@ test('lab sections run a constant number of queries', function (string $section)
 test('chunk() skips rows when the callback changes the filtered column; chunkById() does not', function () {
     config(['database.seed_scale' => 'small']);
     $this->seed(DatabaseSeeder::class);
-    $unapproved = Review::where('is_approved', false)->count();
+    $pending = fn () => Review::withoutGlobalScope(ApprovedScope::class)->where('is_approved', false)->count();
+    $unapproved = $pending();
 
     $examples = new CollectionExamples;
     [$chunk, $chunkById] = $examples->run($examples->comparisons('chunk-pitfall')[0]);
@@ -56,7 +58,7 @@ test('chunk() skips rows when the callback changes the filtered column; chunkByI
         ->and($chunk['profile']->result['unapproved_after'])->toBeGreaterThan(0)
         ->and($chunkById['profile']->result['unapproved_after'])->toBe(0)
         // Both ran inside rolled-back transactions.
-        ->and(Review::where('is_approved', false)->count())->toBe($unapproved);
+        ->and($pending())->toBe($unapproved);
 });
 
 test('toQuery()->update() only touches the models in the collection', function () {

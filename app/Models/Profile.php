@@ -17,6 +17,19 @@ class Profile extends Model
     use HasFactory;
 
     /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            // Encrypted with APP_KEY (AES-256-CBC + MAC); the column holds base64 ciphertext,
+            // so it cannot be searched or indexed. Rotating APP_KEY: put the old key in
+            // APP_PREVIOUS_KEYS or these values can no longer be decrypted.
+            'phone' => 'encrypted',
+        ];
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo

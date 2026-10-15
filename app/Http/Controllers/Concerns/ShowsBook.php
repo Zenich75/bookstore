@@ -24,9 +24,10 @@ trait ShowsBook
             'warehouses' => fn ($query) => $query->orderBy('name'),
             'latestReview.user:id,name',
             'bestReview.user:id,name',
-        ])->loadCount('approvedReviews')->loadAvg('approvedReviews', 'rating');
+        ])->loadCount('reviews')->loadAvg('reviews', 'rating');
 
-        $reviews = $book->approvedReviews()
+        // Approved only: Review's global ApprovedScope applies to relation queries too.
+        $reviews = $book->reviews()
             ->with('user:id,name')
             ->latest()
             ->paginate(10)

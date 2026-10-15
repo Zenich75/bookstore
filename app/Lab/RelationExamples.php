@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\Image;
 use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use App\Models\StockMovement;
 use App\Models\Tag;
 use App\Models\User;
@@ -133,10 +134,13 @@ final class RelationExamples
             return User::find($s->id('reader'))->reviews()->latest('id')->limit(3)->get();
         });
 
-        $this->add($section, __('lab.relations.examples.book_approved_reviews'), 'hasMany + where', function (Samples $s) {
-            $book = Book::withCount(['reviews', 'approvedReviews'])->find($s->id('book'));
+        $this->add($section, __('lab.relations.examples.book_approved_reviews'), 'hasMany + global scope', function (Samples $s) {
+            $book = Book::withCount([
+                'reviews',
+                'reviews as all_reviews_count' => fn ($query) => $query->withoutGlobalScope(ApprovedScope::class),
+            ])->find($s->id('book'));
 
-            return $book->only(['id', 'title', 'reviews_count', 'approved_reviews_count']);
+            return $book->only(['id', 'title', 'reviews_count', 'all_reviews_count']);
         });
 
         $this->add($section, __('lab.relations.examples.book_latest_review'), 'hasOne latestOfMany', function (Samples $s) {
@@ -261,7 +265,7 @@ final class RelationExamples
         });
 
         $this->add($section, __('lab.relations.examples.with_count'), 'withCount', function (Samples $s) {
-            return Book::withCount(['reviews', 'approvedReviews'])->orderBy('id')->limit(3)->get(['id', 'title']);
+            return Book::withCount(['reviews', 'tags'])->orderBy('id')->limit(3)->get(['id', 'title']);
         });
 
         $this->add($section, __('lab.relations.examples.with_avg'), 'withAvg', function (Samples $s) {
@@ -287,7 +291,7 @@ final class RelationExamples
             $book = Book::with('authors')->find($s->id('bookWithTranslator'));
 
             return $book->authors->map(fn (Author $author) => [
-                'author' => $author->first_name.' '.$author->last_name,
+                'author' => $author->full_name,
                 'role' => $author->credit->role,
                 'sort_order' => $author->credit->sort_order,
             ]);

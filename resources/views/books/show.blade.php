@@ -8,7 +8,7 @@
         / <a href="{{ route('genres.show', $book->genre) }}" class="hover:underline">{{ $book->genre->name }}</a>
         @isset($viaAuthor)
             <span class="ml-2 rounded bg-stone-200 px-2 py-0.5 text-xs">
-                {{ __('ui.book.via') }} <a href="{{ route('authors.show', $viaAuthor) }}" class="underline">{{ $viaAuthor->first_name }} {{ $viaAuthor->last_name }}</a>
+                {{ __('ui.book.via') }} <a href="{{ route('authors.show', $viaAuthor) }}" class="underline">{{ $viaAuthor->full_name }}</a>
             </span>
         @endisset
     </nav>
@@ -21,13 +21,13 @@
             </div>
             <x-card>
                 <dl class="space-y-1 text-sm">
-                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.price') }}</dt><dd class="font-semibold">{{ Number::currency($book->price / 100, in: 'UAH', locale: 'uk') }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.price') }}</dt><dd class="font-semibold">{{ $book->price->format() }}</dd></div>
                     <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.format') }}</dt><dd class="text-right">{{ $book->format->label() }}</dd></div>
-                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.isbn') }}</dt><dd>{{ $book->isbn }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.isbn') }}</dt><dd>{{ $book->isbn_formatted }}</dd></div>
                     <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.published') }}</dt><dd>{{ $book->published_at?->translatedFormat('j F Y') ?? __('ui.book.unpublished') }}</dd></div>
-                    @isset($book->meta['pages'])
-                        <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.pages') }}</dt><dd>{{ $book->meta['pages'] }}</dd></div>
-                    @endisset
+                    @if ($book->meta?->has('pages'))
+                        <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.pages') }}</dt><dd>{{ $book->meta->get('pages') }}</dd></div>
+                    @endif
                 </dl>
             </x-card>
         </div>
@@ -37,11 +37,11 @@
                 <p class="text-stone-600">
                     {{-- $loop: first / last / iteration in a list of credits. --}}
                     @foreach ($book->authors as $author)
-                        @if (! $loop->first){{ $loop->last ? ' and ' : ', ' }}@endif<a href="{{ route('authors.show', $author) }}" class="font-medium text-amber-800 hover:underline">{{ $author->first_name }} {{ $author->last_name }}</a>
+                        @if (! $loop->first){{ $loop->last ? ' and ' : ', ' }}@endif<a href="{{ route('authors.show', $author) }}" class="font-medium text-amber-800 hover:underline">{{ $author->full_name }}</a>
                         <span class="text-xs text-stone-400">({{ Str::lower(App\Enums\AuthorRole::from($author->credit->role)->label()) }})</span>
                     @endforeach
                 </p>
-                <div class="mt-2"><x-rating-stars :rating="$book->approved_reviews_avg_rating" /> <span class="text-sm text-stone-500">· {{ trans_choice('ui.counts.approved_reviews', $book->approved_reviews_count) }}</span></div>
+                <div class="mt-2"><x-rating-stars :rating="$book->reviews_avg_rating" /> <span class="text-sm text-stone-500">· {{ trans_choice('ui.counts.approved_reviews', $book->reviews_count) }}</span></div>
             </section>
 
             @if ($book->genres->isNotEmpty() || $book->tags->isNotEmpty())

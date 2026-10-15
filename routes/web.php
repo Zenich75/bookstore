@@ -6,6 +6,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\GenreController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Lab\LabCollectionsController;
+use App\Http\Controllers\Lab\LabModelsController;
 use App\Http\Controllers\Lab\LabNPlusOneController;
 use App\Http\Controllers\Lab\LabRelationsController;
 use App\Http\Controllers\ReportController;
@@ -63,6 +64,7 @@ Route::prefix('lab')->name('lab.')->group(function () {
     Route::get('/relations', LabRelationsController::class)->name('relations');
     Route::get('/n-plus-one', LabNPlusOneController::class)->name('n-plus-one');
     Route::get('/collections', LabCollectionsController::class)->name('collections');
+    Route::get('/models', LabModelsController::class)->name('models');
 });
 
 // Any unmatched URL => our custom 404 page (instead of the framework's default).

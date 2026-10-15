@@ -28,8 +28,8 @@ Always run app commands through Sail: `./vendor/bin/sail artisan ...`, `./vendor
   for terminology. No hardcoded UI strings in views or lab classes; add every key to both `uk`
   and `en` (a test checks key parity and that no raw keys reach the HTML).
 - Money is stored as integer kopecks/cents (e.g. `price` as `unsignedInteger`), never floats or
-  decimals; display in UAH only at the presentation layer:
-  `Number::currency($cents / 100, in: 'UAH', locale: 'uk')`.
+  decimals. In models cast it to `App\ValueObjects\Money` (`'price' => Money::class`); display in UAH
+  only at the presentation layer via `Money::format()` (raw SQL sums: `Money::fromCents($cents)->format()`).
 - Slugs are ASCII: always `Str::slug($value, '-', 'uk')`. Dates: Carbon `translatedFormat()`.
 - Seed data is Ukrainian (Faker `uk_UA`).
 - Eloquent strict mode (`Model::shouldBeStrict()`) is on by default, controlled by `MODEL_STRICT`

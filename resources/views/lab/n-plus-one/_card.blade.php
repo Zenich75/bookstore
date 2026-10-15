@@ -4,9 +4,9 @@
 --}}
 @php
     // withCount() result when present; otherwise count the relation (lazy or eager-loaded).
-    $reviewCount = array_key_exists('approved_reviews_count', $book->getAttributes())
-        ? $book->approved_reviews_count
-        : $book->approvedReviews->count();
+    $reviewCount = array_key_exists('reviews_count', $book->getAttributes())
+        ? $book->reviews_count
+        : $book->reviews->count();
 @endphp
 
 <article class="rounded border border-stone-200 bg-white p-3 text-sm">
@@ -19,7 +19,7 @@
                 {{-- LabBook (variant l): the author_names accessor hides a relation read. --}}
                 {{ $book instanceof App\Lab\Models\LabBook
                     ? $book->author_names
-                    : $book->authors->map(fn ($author) => $author->first_name.' '.$author->last_name)->join(', ') }}
+                    : $book->authors->pluck('full_name')->join(', ') }}
             </p>
             <p class="text-xs text-stone-400">{{ $book->genre?->name ?? __('lab.n_plus_one.card.no_genre') }} · {{ trans_choice('ui.counts.reviews', $reviewCount) }}</p>
         </div>

@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\DB;
  * round-trip per row plus model events, casts and timestamps for each — that
  * takes many minutes. A multi-row INSERT of 1000 rows via the Query Builder is
  * one statement per chunk and is orders of magnitude faster. The trade-off:
- * no model events, casts or automatic timestamps (we fill those by hand).
+ * no model events, casts or automatic timestamps (we fill those by hand) — so
+ * StockObserver writes no movements and the "encrypted" cast does not encrypt
+ * profiles.phone; the seeders do these explicitly. (DatabaseSeeder also mutes
+ * model events entirely with WithoutModelEvents.)
  * Stage 5 (performance) compares both approaches in detail.
  */
 trait BulkInserts

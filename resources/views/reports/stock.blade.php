@@ -1,10 +1,12 @@
+{{-- SQL report: sums stay integer kopecks in the query, Money only formats them. --}}
+@use('App\ValueObjects\Money')
 <x-layouts.app :title="__('reports.stock.title')">
     @include('reports._nav')
 
     <div class="mb-6 grid grid-cols-3 gap-4">
         <x-card class="text-center"><div class="text-2xl font-semibold">{{ Number::format($totals['quantity']) }}</div><div class="text-sm text-stone-500">{{ __('reports.stock.units') }}</div></x-card>
         <x-card class="text-center"><div class="text-2xl font-semibold">{{ Number::format($totals['reserved']) }}</div><div class="text-sm text-stone-500">{{ __('reports.stock.reserved') }}</div></x-card>
-        <x-card class="text-center"><div class="text-2xl font-semibold">{{ Number::currency($totals['value_cents'] / 100, in: 'UAH', locale: 'uk') }}</div><div class="text-sm text-stone-500">{{ __('reports.stock.value') }}</div></x-card>
+        <x-card class="text-center"><div class="text-2xl font-semibold">{{ Money::fromCents((int) $totals['value_cents'])->format() }}</div><div class="text-sm text-stone-500">{{ __('reports.stock.value') }}</div></x-card>
     </div>
 
     <div class="space-y-6">
@@ -28,13 +30,13 @@
                                 <td class="py-1 text-right tabular-nums">{{ Number::format($row->books) }}</td>
                                 <td class="py-1 text-right tabular-nums">{{ Number::format($row->quantity) }}</td>
                                 <td class="py-1 text-right tabular-nums">{{ Number::format($row->reserved) }}</td>
-                                <td class="py-1 text-right tabular-nums">{{ Number::currency($row->value_cents / 100, in: 'UAH', locale: 'uk') }}</td>
+                                <td class="py-1 text-right tabular-nums">{{ Money::fromCents((int) $row->value_cents)->format() }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
                 <x-slot:footer>
-                    {{ trans_choice('ui.counts.units', $rows->sum('quantity'), ['count' => Number::format($rows->sum('quantity'))]) }} · {{ Number::currency($rows->sum('value_cents') / 100, in: 'UAH', locale: 'uk') }}
+                    {{ trans_choice('ui.counts.units', $rows->sum('quantity'), ['count' => Number::format($rows->sum('quantity'))]) }} · {{ Money::fromCents((int) $rows->sum('value_cents'))->format() }}
                 </x-slot:footer>
             </x-card>
         @empty

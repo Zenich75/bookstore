@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\AuthorRole;
 use App\Enums\ImageType;
+use App\Models\Concerns\HasSlug;
 use Database\Factories\AuthorFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 class Author extends Model
 {
     /** @use HasFactory<AuthorFactory> */
-    use HasFactory;
+    use HasFactory, HasSlug;
 
     /**
      * @return array<string, string>
@@ -26,8 +28,25 @@ class Author extends Model
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
+            // Carbon at midnight; serialized as "1970-01-31" thanks to the date format.
+            'birth_date' => 'date:Y-m-d',
         ];
+    }
+
+    /**
+     * $author->full_name — read-only accessor (modern Attribute syntax).
+     * Legacy equivalent: public function getFullNameAttribute(): string { ... }
+     *
+     * @return Attribute<string, never>
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::get(fn () => trim($this->first_name.' '.$this->last_name));
+    }
+
+    protected function slugSource(): string
+    {
+        return $this->first_name.' '.$this->last_name;
     }
 
     /**

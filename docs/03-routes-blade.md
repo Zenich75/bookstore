@@ -12,7 +12,7 @@
 
 - `routes/web.php` — кожна техніка маршрутизації з коротким коментарем.
 - `app/Http/Controllers/*` — `HomeController` (invokable), `BookController` (запит каталогу
-  будується через `when()`; `cardQuery()` — усе, що читає картка книги), `AuthorController`
+  будується через `when()`; `cardQuery()` — усе, що читає картка книги; з етапу 6 — скоуп `Book::withCardData()`), `AuthorController`
   (контролерна група + вкладена прив’язка), `Concerns/ShowsBook.php` (спільна сторінка книги), `Admin/*`.
 - `resources/views/components/` — `layouts/app`, `book-card`, `rating-stars`, `card`,
   `genre-tree` (рекурсивний), `stock-badge` (представлення класового компонента).
@@ -56,7 +56,8 @@
 окремий необов’язковий крок. Через суворий режим дані для картки треба завантажити наперед, тому
 `BookController::cardQuery()` жадібно завантажує `genre`, `authors`, `cover` і додає
 `withCount/withAvg('approvedReviews')` та `withSum('stocks', 'quantity')`. На етапі 6 ці частини
-стануть локальними скоупами. `paginate(24)->withQueryString()` зберігає фільтри в посиланнях пагінації.
+стали локальними скоупами: `Book::withCardData()`, `ofGenre()`, `byAuthor()`, `inStock()`, `sorted()`
+(див. [06-attributes-casts.md](06-attributes-casts.md)), а `cardQuery()` видалено. `paginate(24)->withQueryString()` зберігає фільтри в посиланнях пагінації.
 
 ### Макет-компонент проти `@extends`
 
@@ -109,7 +110,7 @@ lang-файлів). Демонстрація XSS — частина етапу 8
 
 ## Вправа
 
-1. Додайте `GET /tags/{tag:slug}`, що показує книги з тегом (перевикористайте `cardQuery()`), а
+1. Додайте `GET /tags/{tag:slug}`, що показує книги з тегом (перевикористайте `cardQuery()`, з етапу 6 — `Book::withCardData()`), а
    також фільтр «тег» і відповідний чип у каталозі.
 2. Перетворіть `x-rating-stars` на класовий компонент і покрийте юніт-тестом округлення.
 3. Замініть два маршрути на `Route::resource('warehouses', …)->only(['index', 'show'])` — що

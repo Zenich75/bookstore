@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSlug;
 use Database\Factories\GenreFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,12 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 class Genre extends Model
 {
     /** @use HasFactory<GenreFactory> */
-    use HasFactory;
+    use HasFactory, HasSlug;
+
+    protected function slugSource(): string
+    {
+        return $this->name;
+    }
 
     /**
      * @return BelongsTo<Genre, $this>

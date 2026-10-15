@@ -1,4 +1,4 @@
-<x-layouts.app :title="$author->first_name.' '.$author->last_name">
+<x-layouts.app :title="$author->full_name">
     <div class="grid gap-8 md:grid-cols-[12rem_1fr]">
         <div>
             <div class="flex h-48 items-center justify-center rounded-lg bg-stone-200 text-4xl font-semibold text-stone-500"

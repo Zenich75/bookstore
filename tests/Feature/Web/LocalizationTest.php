@@ -32,7 +32,7 @@ test('pages render in Ukrainian without untranslated keys', function () {
         route('authors.books.show', [$author, $book]), route('genres.index'), route('warehouses.index'),
         route('warehouses.show', 1), route('about'), route('admin.dashboard'), route('admin.books.show', $book),
         route('lab.relations'), route('lab.n-plus-one'), route('lab.n-plus-one', ['variant' => 'strict']),
-        route('lab.collections'), route('reports.stock'), route('reports.top-authors'), '/no-such-page',
+        route('lab.collections'), route('lab.models'), route('reports.stock'), route('reports.top-authors'), '/no-such-page',
     ];
 
     foreach ($urls as $url) {

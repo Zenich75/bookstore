@@ -37,6 +37,7 @@
                 <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_relations') }}</a>
                 <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_n_plus_one') }}</a>
                 <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
+                <a href="{{ route('lab.models') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_models') }}</a>
                 <a href="{{ route('reports.stock') }}" class="hover:text-amber-700">{{ __('ui.nav.reports') }}</a>
                 <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-700">{{ __('ui.nav.admin') }}</a>
             </span>

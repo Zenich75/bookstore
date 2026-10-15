@@ -31,7 +31,7 @@
 | `hasOne` | `User::profile()` | `select * from profiles where user_id in (…)` |
 | `belongsTo` | `Review::book()`, `User::warehouse()`, `Genre::parent()` | `select * from books where id in (…)` |
 | `hasMany` | `User::reviews()`, `Genre::children()`, `Book::stocks()` | `select * from reviews where user_id in (…)` |
-| `hasMany` + `where` | `Book::approvedReviews()` | `… where book_id in (…) and is_approved = 1` |
+| `hasMany` + `where` | `Book::approvedReviews()` (до етапу 6; тепер `Book::reviews()` + глобальний скоуп `ApprovedScope`, див. [06](06-attributes-casts.md)) | `… where book_id in (…) and is_approved = 1` |
 | `hasOne` + `where` | `Warehouse::manager()` | `select * from users where role = 'manager' and warehouse_id in (…)` |
 | `hasOne()->latestOfMany()` | `Book::latestReview()` | `inner join (select max(id) … group by book_id)` |
 | `hasOne()->ofMany('rating','max')` | `Book::bestReview()` | вкладені підзапити `max(rating)`, потім `max(id)`, приєднані назад |
@@ -123,7 +123,7 @@ $this->hasManyThrough(
 - Зовнішній ключ = `{singular_model}_id` (`genre_id`); проміжна таблиця = обидві назви в однині
   в алфавітному порядку (`author_book`, `book_genre`) — тоді додаткові аргументи не потрібні.
 - Зв’язки сам на себе й нестандартні назви потребують явних ключів: `belongsTo(Genre::class, 'parent_id')`.
-- Варіанти з умовою називаємо за змістом: `approvedReviews`, `translators`, `latestReview`.
+- Варіанти з умовою називаємо за змістом: `translators`, `latestReview`, `bestReview`.
 - Морф-стовпці: `{name}able_type` / `{name}able_id` (`imageable`, `taggable`).
 
 ## Вправа

@@ -6,7 +6,7 @@
             @if ($image->imageable instanceof App\Models\Book)
                 {{ $image->imageable->title }} <span class="text-stone-400">· {{ $image->imageable->genre->name }}</span>
             @else
-                {{ $image->imageable->first_name }} {{ $image->imageable->last_name }}
+                {{ $image->imageable->full_name }}
                 <span class="text-stone-400">· {{ trans_choice('lab.n_plus_one.images.books', $image->imageable->books->count()) }}</span>
             @endif
         </li>

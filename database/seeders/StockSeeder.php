@@ -39,7 +39,8 @@ class StockSeeder extends Seeder
                         'updated_at' => $now,
                     ];
 
-                    // Initial receipt that explains the current quantity.
+                    // Initial receipt that explains the current quantity. Written by hand:
+                    // a bulk insert fires no model events, so StockObserver does not run.
                     $movements[] = [
                         'warehouse_id' => $warehouseId,
                         'book_id' => $book->id,

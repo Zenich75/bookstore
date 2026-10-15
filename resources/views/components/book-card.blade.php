@@ -1,6 +1,6 @@
 {{--
-    Anonymous component. Expects a book loaded via BookController::cardQuery()
-    (genre, authors, cover, approved_reviews_count/avg, stocks_sum_quantity).
+    Anonymous component. Expects a book loaded via the Book::withCardData() scope
+    (genre, authors, cover, reviews_count/avg, stocks_sum_quantity).
     Extra attributes passed by the caller (class, id, data-*) are merged in.
 --}}
 @props(['book', 'compact' => false])
@@ -22,14 +22,14 @@
         <a href="{{ route('books.show', $book) }}" class="font-medium leading-snug hover:text-amber-700">{{ $book->title }}</a>
 
         <p class="text-sm text-stone-500">
-            {{ $book->authors->map(fn ($author) => $author->first_name.' '.$author->last_name)->join(', ') ?: __('ui.card.unknown_author') }}
+            {{ $book->authors->pluck('full_name')->join(', ') ?: __('ui.card.unknown_author') }}
         </p>
 
-        <x-rating-stars :rating="$book->approved_reviews_avg_rating" />
+        <x-rating-stars :rating="$book->reviews_avg_rating" />
 
         <div class="mt-auto flex items-center justify-between pt-2 text-sm">
-            {{-- Price is stored in kopecks (cents); formatting moves to an accessor in stage 6. --}}
-            <span class="font-semibold">{{ Number::currency($book->price / 100, in: 'UAH', locale: 'uk') }}</span>
+            {{-- price is a Money value object (MoneyCast); kopecks are formatted only here. --}}
+            <span class="font-semibold">{{ $book->price->format() }}</span>
             <span @class([
                 'text-xs',
                 'text-red-600' => (int) $book->stocks_sum_quantity === 0,
@@ -39,7 +39,7 @@
 
         @unless ($compact)
             <p class="text-xs text-stone-400">
-                {{ $book->format->label() }} · {{ $book->genre->name }} · {{ trans_choice('ui.counts.reviews', $book->approved_reviews_count) }}
+                {{ $book->format->label() }} · {{ $book->genre->name }} · {{ trans_choice('ui.counts.reviews', $book->reviews_count) }}
             </p>
         @endunless
     </div>

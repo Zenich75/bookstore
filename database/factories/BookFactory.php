@@ -76,11 +76,12 @@ class BookFactory extends Factory
     }
 
     /**
-     * Attach reviews via the reviews() hasMany relation.
+     * Attach approved reviews via the reviews() hasMany relation (reviews() only
+     * sees approved ones: Review has a global ApprovedScope).
      */
     public function withReviews(int $count = 3): static
     {
-        return $this->has(Review::factory()->count($count), 'reviews');
+        return $this->has(Review::factory()->approved()->count($count), 'reviews');
     }
 
     /**

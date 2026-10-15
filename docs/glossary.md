@@ -66,8 +66,15 @@
 | cursor | курсор |
 | accessor / mutator | аксесор / мутатор |
 | cast | приведення типів (cast) |
+| custom cast / value object | власний каст / об’єкт-значення (value object) |
+| encrypted cast | шифрований каст |
+| serialization | серіалізація |
 | scope | скоуп (scope) |
+| local scope / global scope | локальний скоуп / глобальний скоуп |
+| model event | подія моделі |
 | observer | спостерігач (observer) |
+| mass assignment | масове присвоєння (mass assignment) |
+| slug | слаг (slug) |
 | factory / seeder | фабрика / сидер |
 | migration | міграція |
 | component / slot / props | компонент / слот / властивості (props) |

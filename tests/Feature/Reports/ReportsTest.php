@@ -32,7 +32,7 @@ test('stock report equals the same totals computed with collections', function (
             'quantity' => $stocks->sum('quantity'),
             'reserved' => $stocks->sum('reserved'),
             'books' => $stocks->pluck('book_id')->unique()->count(),
-            'value_cents' => $stocks->sum(fn (Stock $stock) => $stock->quantity * $stock->book->price),
+            'value_cents' => $stocks->sum(fn (Stock $stock) => $stock->book->price->multiply($stock->quantity)->cents),
         ]);
 
     expect($rows->keys()->sort()->values()->all())->toBe($expected->keys()->sort()->values()->all());
