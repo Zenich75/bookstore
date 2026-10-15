@@ -38,6 +38,7 @@ Tip: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 | App | <http://localhost> |
 | Mailpit | <http://localhost:8025> |
 | Relations lab | <http://localhost/lab/relations> |
+| N+1 lab | <http://localhost/lab/n-plus-one> |
 | MySQL (host) | `127.0.0.1:3307`, user `sail` / `password` |
 
 Useful commands:
@@ -59,7 +60,7 @@ Useful commands:
 | 1 | Schema, models (PHP attributes), enums, factories, seeders | [docs/01-schema.md](docs/01-schema.md) |
 | 2 | Eloquent relationships, custom pivot, morph map, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
 | 3 | Routes (bindings, scoped, withTrashed, groups, fallback), Blade layouts & components, catalog | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
-| 4 | _TBD_ | |
+| 4 | N+1: strict mode, profiler, 19-variant lab, constant-query tests | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
 | 5 | _TBD_ | |
 | 6 | _TBD_ | |
 | 7 | _TBD_ | |

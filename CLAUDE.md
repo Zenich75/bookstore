@@ -30,6 +30,7 @@ Always run app commands through Sail: `./vendor/bin/sail artisan ...`, `./vendor
   toggle the flag instead.
 - Relationship methods have return types and `@return Relation<Related, $this>` generics docblocks.
   Load relations explicitly (`with`/`load`/relation query) — never rely on lazy loading.
+- Every public page gets an `expectConstantQueries()` test (tests/Pest.php) guarding against N+1.
 - Polymorphic types use `Relation::enforceMorphMap()` (AppServiceProvider): every new morphable
   model must get an alias there; data migrations use plain alias/class strings, not `::class`.
 

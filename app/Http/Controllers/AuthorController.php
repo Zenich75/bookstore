@@ -24,7 +24,10 @@ class AuthorController extends Controller
 
     public function show(Author $author): View
     {
-        $author->load(['photo', 'books' => fn ($query) => $query->orderBy('title')]);
+        // Only the columns the list shows (pivot columns are added by the relation).
+        $author->load(['photo', 'books' => fn ($query) => $query
+            ->select(['books.id', 'books.title', 'books.slug', 'books.published_year'])
+            ->orderBy('title')]);
 
         return view('authors.show', [
             'author' => $author,
