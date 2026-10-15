@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\ImageType;
+use Database\Factories\ImageFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+#[Fillable(['imageable_type', 'imageable_id', 'path', 'type', 'sort_order'])]
+class Image extends Model
+{
+    /** @use HasFactory<ImageFactory> */
+    use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'type' => ImageType::class,
+        ];
+    }
+}

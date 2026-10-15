@@ -21,6 +21,15 @@ composer install
 ./vendor/bin/sail artisan queue:work      # in a separate terminal
 ```
 
+Demo data volume is controlled by `SEED_SCALE` (`small` by default, `full` ≈ 50k books /
+200k reviews, ~1.5 min):
+
+```bash
+docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --seed
+```
+
+Seeded accounts (password `password`): `admin@example.com`, `manager1..5@example.com`.
+
 Tip: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 
 | Service | URL |
@@ -45,7 +54,7 @@ Useful commands:
 | Stage | Topic | Notes |
 |---|---|---|
 | 0 | Project setup: Sail, Debugbar, strict mode, database queue | [docs/00-setup.md](docs/00-setup.md) |
-| 1 | _TBD_ | |
+| 1 | Schema, models (PHP attributes), enums, factories, seeders | [docs/01-schema.md](docs/01-schema.md) |
 | 2 | _TBD_ | |
 | 3 | _TBD_ | |
 | 4 | _TBD_ | |
