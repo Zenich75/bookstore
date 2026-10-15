@@ -78,6 +78,7 @@ return [
     ],
     'book' => [
         'via' => 'через',
+        'and' => 'та',
         'price' => 'Ціна',
         'format' => 'Формат',
         'isbn' => 'ISBN',

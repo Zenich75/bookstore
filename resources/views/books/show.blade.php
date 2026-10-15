@@ -37,7 +37,7 @@
                 <p class="text-stone-600">
                     {{-- $loop: first / last / iteration in a list of credits. --}}
                     @foreach ($book->authors as $author)
-                        @if (! $loop->first){{ $loop->last ? ' and ' : ', ' }}@endif<a href="{{ route('authors.show', $author) }}" class="font-medium text-amber-800 hover:underline">{{ $author->full_name }}</a>
+                        @if (! $loop->first){{ $loop->last ? ' '.__('ui.book.and').' ' : ', ' }}@endif<a href="{{ route('authors.show', $author) }}" class="font-medium text-amber-800 hover:underline">{{ $author->full_name }}</a>
                         <span class="text-xs text-stone-400">({{ Str::lower(App\Enums\AuthorRole::from($author->credit->role)->label()) }})</span>
                     @endforeach
                 </p>

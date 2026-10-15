@@ -78,6 +78,7 @@ return [
     ],
     'book' => [
         'via' => 'via',
+        'and' => 'and',
         'price' => 'Price',
         'format' => 'Format',
         'isbn' => 'ISBN',

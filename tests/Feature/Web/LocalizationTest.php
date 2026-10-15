@@ -99,3 +99,13 @@ test('slugs generated from Ukrainian text are ASCII', function () {
     expect($book->slug)->toMatch('/^[a-z0-9-]+$/')
         ->and(Book::factory()->create()->slug)->toMatch('/^[a-z0-9-]+$/');
 });
+
+test('the last author is joined with a translated conjunction', function () {
+    $book = Book::factory()->withAuthors(3)->create();
+    $names = $book->authors()->get()->pluck('full_name');
+
+    $this->get(route('books.show', $book))
+        ->assertOk()
+        ->assertSeeInOrder([$names[0], ', ', $names[1], ' та ', $names[2]], false)
+        ->assertDontSee(' and ', false);
+});
