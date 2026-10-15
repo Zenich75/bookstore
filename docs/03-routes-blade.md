@@ -1,103 +1,117 @@
-# 03 — Routes, controllers & Blade
+# 03 — Маршрути, контролери та Blade
 
-## Goal
+## Мета
 
-Build the public site — home, catalog with filters, book/author/genre/warehouse pages — and
-learn the main routing techniques (binding by slug, scoped bindings, `withTrashed`, resource and
-controller groups, fallback) and Blade's building blocks (component layouts vs `@extends`,
-anonymous and class components, slots, props, the attribute bag, view composers).
+Побудувати публічний сайт — головну, каталог із фільтрами, сторінки книги, автора, жанру й
+складу — і опанувати основні техніки маршрутизації (прив’язка за слагом, вкладені прив’язки
+(scoped bindings), `withTrashed`, ресурсні й контролерні групи, резервний маршрут (fallback)) та
+будівельні блоки Blade (макети-компоненти проти `@extends`, анонімні й класові компоненти, слоти,
+властивості (props), набір атрибутів, компонувальники представлень (view composers)).
 
-## Where to look in code
+## Де дивитися в коді
 
-- `routes/web.php` — every routing technique, each with a one-line comment.
-- `app/Http/Controllers/*` — `HomeController` (invokable), `BookController` (catalog query built
-  with `when()`; `cardQuery()` = everything a book card reads), `AuthorController` (controller
-  group + scoped binding), `Concerns/ShowsBook.php` (shared book page), `Admin/*`.
+- `routes/web.php` — кожна техніка маршрутизації з коротким коментарем.
+- `app/Http/Controllers/*` — `HomeController` (invokable), `BookController` (запит каталогу
+  будується через `when()`; `cardQuery()` — усе, що читає картка книги), `AuthorController`
+  (контролерна група + вкладена прив’язка), `Concerns/ShowsBook.php` (спільна сторінка книги), `Admin/*`.
 - `resources/views/components/` — `layouts/app`, `book-card`, `rating-stars`, `card`,
-  `genre-tree` (recursive), `stock-badge` (view of the class component).
-- `app/View/Components/StockBadge.php` — class component with the stock-state logic.
-- `app/View/Composers/GenreTreeComposer.php` + `AppServiceProvider` — view composer.
-- `resources/views/layouts/legacy.blade.php` + `about.blade.php` — `@extends` comparison.
-- `tests/Feature/Web/*` — routes, catalog filters/sorting/pagination, `StockBadge`.
+  `genre-tree` (рекурсивний), `stock-badge` (представлення класового компонента).
+- `app/View/Components/StockBadge.php` — класовий компонент із логікою статусу залишку.
+- `app/View/Composers/GenreTreeComposer.php` + `AppServiceProvider` — компонувальник представлення.
+- `resources/views/layouts/legacy.blade.php` + `about.blade.php` — порівняння з `@extends`.
+- `lang/{uk,en}/ui.php` — усі тексти інтерфейсу; у шаблонах лише `__()` / `trans_choice()`.
+- `tests/Feature/Web/*` — маршрути, фільтри/сортування/пагінація каталогу, `StockBadge`, локалізація.
 
-## Key concepts
+## Ключові поняття
 
-### Routing techniques
+### Техніки маршрутизації
 
-| Technique | Where | Notes |
+| Техніка | Де | Примітки |
 |---|---|---|
-| Invokable controller | `Route::get('/', HomeController::class)` | one action → `__invoke()` |
-| Resource, limited | `Route::resource('books', …)->only(['index', 'show'])` | names `books.index`, `books.show` |
-| Binding by column | `->scoped(['book' => 'slug'])`, `{author:slug}`, `{genre:slug}` | `route('books.show', $book)` fills the slug automatically |
-| Binding by id (default) | `/warehouses/{warehouse}`, `/admin/books/{book}` | `Model::findOrFail($id)` under the hood |
-| Controller group | `Route::controller(AuthorController::class)->group(…)` | actions referenced as `'index'`, `'show'` |
-| Scoped binding | `/authors/{author:slug}/books/{book:slug}` + `->scopeBindings()` | child resolved via `$author->books()` → 404 if not related |
-| `withTrashed()` | `admin.books.show` | soft-deleted models resolve; public routes return 404 |
-| Prefix + name groups | `prefix('admin')->name('admin.')`, `prefix('lab')->name('lab.')` | middleware for admin comes in stage 7 |
-| View route | `Route::view('/about', 'about')` | no controller needed |
-| Redirect | `genres.show` → `redirect()->route('books.index', ['genre' => …])` | a genre "page" is the filtered catalog |
-| Fallback | `Route::fallback(…)` | last route; renders `errors/404` |
+| Invokable-контролер | `Route::get('/', HomeController::class)` | одна дія → `__invoke()` |
+| Ресурс з обмеженням | `Route::resource('books', …)->only(['index', 'show'])` | імена `books.index`, `books.show` |
+| Прив’язка за стовпцем | `->scoped(['book' => 'slug'])`, `{author:slug}`, `{genre:slug}` | `route('books.show', $book)` сам підставляє слаг |
+| Прив’язка за id (типово) | `/warehouses/{warehouse}`, `/admin/books/{book}` | під капотом `Model::findOrFail($id)` |
+| Контролерна група | `Route::controller(AuthorController::class)->group(…)` | дії вказуються як `'index'`, `'show'` |
+| Вкладена прив’язка (scoped binding) | `/authors/{author:slug}/books/{book:slug}` + `->scopeBindings()` | дочірня модель шукається через `$author->books()` → 404, якщо не пов’язана |
+| `withTrashed()` | `admin.books.show` | м’яко видалені моделі знаходяться; публічні маршрути повертають 404 |
+| Групи з префіксом та іменем | `prefix('admin')->name('admin.')`, `prefix('lab')->name('lab.')` | проміжне ПЗ (middleware) для адмінки — на етапі 7 |
+| Маршрут-представлення | `Route::view('/about', 'about')` | контролер не потрібен |
+| Перенаправлення | `genres.show` → `redirect()->route('books.index', ['genre' => …])` | «сторінка» жанру — це відфільтрований каталог |
+| Резервний маршрут | `Route::fallback(…)` | останній маршрут; рендерить `errors/404` |
 
-Inspect with `sail artisan route:list --except-vendor` (add `-v` to see middleware,
-`--name=admin` to filter). `resources/views/errors/404.blade.php` is used both by the fallback
-and by Laravel for every 404 (e.g. a failed model binding).
+Перевіряйте командою `sail artisan route:list --except-vendor` (`-v` — показати middleware,
+`--name=admin` — відфільтрувати). `resources/views/errors/404.blade.php` використовується і
+резервним маршрутом, і самим Laravel для кожної помилки 404 (наприклад, коли не вдалася прив’язка моделі).
 
-> Scoped binding needs a relationship on the parent named like the child parameter in plural
-> (`books`), and it applies automatically when the child uses a custom key (`{book:slug}`);
-> `->scopeBindings()` makes it explicit (and works for `{book}` by id too).
+> Вкладена прив’язка потребує зв’язку в батьківській моделі, названого як дочірній параметр у
+> множині (`books`), і вмикається автоматично, коли дочірній параметр має власний ключ
+> (`{book:slug}`); `->scopeBindings()` робить це явним (і працює також для `{book}` за id).
 
-### The catalog query
+### Запит каталогу
 
-Filters are read leniently with `$request->string()`, `->boolean()`, `->enum()` — an unknown
-genre/author slug, format or sort is simply ignored (validation with Form Requests: stage 8).
-The query is built with `->when($value, fn ($query, $value) => …)` so that each filter is a
-single, optional step. Strict mode means the card's data must be loaded up front, so
-`BookController::cardQuery()` eager-loads `genre`, `authors`, `cover` and adds
-`withCount/withAvg('approvedReviews')` and `withSum('stocks', 'quantity')`. In stage 6 these
-become local scopes. `paginate(24)->withQueryString()` keeps filters in page links.
+Фільтри читаються поблажливо через `$request->string()`, `->boolean()`, `->enum()` — невідомий
+слаг жанру чи автора, формат або сортування просто ігнорується (валідація через Form Request —
+етап 8). Запит будується через `->when($value, fn ($query, $value) => …)`, тож кожен фільтр — це
+окремий необов’язковий крок. Через суворий режим дані для картки треба завантажити наперед, тому
+`BookController::cardQuery()` жадібно завантажує `genre`, `authors`, `cover` і додає
+`withCount/withAvg('approvedReviews')` та `withSum('stocks', 'quantity')`. На етапі 6 ці частини
+стануть локальними скоупами. `paginate(24)->withQueryString()` зберігає фільтри в посиланнях пагінації.
 
-### Component layout vs `@extends`
+### Макет-компонент проти `@extends`
 
-| | `<x-layouts.app title="…">` (component) | `@extends('layouts.legacy')` (inheritance) |
+| | `<x-layouts.app title="…">` (компонент) | `@extends('layouts.legacy')` (успадкування) |
 |---|---|---|
-| Content | default `{{ $slot }}` | `@section('content')` → `@yield('content')` |
-| Data in | props (`@props(['title' => null])`), typed and with defaults | `@section('title', '…')` strings |
-| Composability | layouts are just components: can be nested, take named slots | single inheritance chain |
-| Used by | every page | only `/about` |
+| Вміст | типовий `{{ $slot }}` | `@section('content')` → `@yield('content')` |
+| Дані | властивості (`@props(['title' => null])`) з типами й значеннями за замовчуванням | рядки `@section('title', '…')` |
+| Компонування | макети — це звичайні компоненти: можна вкладати, передавати іменовані слоти | один ланцюжок успадкування |
+| Де використовується | усі сторінки | лише `/about` |
 
-### Components
+### Компоненти
 
-- **Anonymous** (`resources/views/components/*.blade.php`): just a view. `@props([...])` declares
-  props (with defaults); everything else lands in `$attributes`.
-- **Attribute bag**: `{{ $attributes->merge(['class' => '…']) }}` appends the caller's classes;
-  `$attributes->class([...])` adds conditional classes. `<x-book-card class="…" data-x="…">`.
-- **`@class([...])`**: conditional CSS classes on any element.
-- **Named slots**: `<x-slot:header>` / `<x-slot:footer>` in `x-card`; check with `@isset($header)`.
-  Slots have their own attributes (`$header->attributes`).
-- **Recursive component**: `x-genre-tree` renders `<x-genre-tree>` for children — only when
-  `relationLoaded('children')`, otherwise strict mode would throw on lazy loading.
-- **Class component** (`StockBadge`): constructor args = props, public methods are callable in
-  the view (`$state()`, `$label()`). Use it when there is real logic to test without HTML.
-- **View composer**: `View::composer('books.partials.sidebar', GenreTreeComposer::class)` adds
-  `$genreTree` whenever that partial renders — the controller doesn't know about it.
+- **Анонімні** (`resources/views/components/*.blade.php`): просто представлення. `@props([...])`
+  оголошує властивості (зі значеннями за замовчуванням); усе інше потрапляє в `$attributes`.
+- **Набір атрибутів**: `{{ $attributes->merge(['class' => '…']) }}` додає класи, передані
+  викликачем; `$attributes->class([...])` — умовні класи. `<x-book-card class="…" data-x="…">`.
+- **`@class([...])`**: умовні CSS-класи на будь-якому елементі.
+- **Іменовані слоти**: `<x-slot:header>` / `<x-slot:footer>` у `x-card`; перевірка — `@isset($header)`.
+  Слоти мають власні атрибути (`$header->attributes`).
+- **Рекурсивний компонент**: `x-genre-tree` рендерить `<x-genre-tree>` для піджанрів — лише коли
+  `relationLoaded('children')`, інакше суворий режим кинув би виняток лінивого завантаження.
+- **Класовий компонент** (`StockBadge`): аргументи конструктора = властивості, публічні методи
+  доступні в представленні (`$state()`, `$label()`). Обирайте його, коли є справжня логіка, яку
+  варто тестувати без HTML.
+- **Компонувальник представлення**: `View::composer('books.partials.sidebar', GenreTreeComposer::class)`
+  додає `$genreTree` щоразу, коли рендериться цей partial — контролер про це не знає.
 
-### Other directives used
+### Інші використані директиви
 
-`@forelse/@empty` (empty states), `$loop->first/last/iteration`, `@include` (shares parent
-variables) vs `@each` (isolated partial per item + empty view), `@isset`, `@env('local')`,
-`@once` + `@push('scripts')` → `@stack('scripts')`, `@selected`, `@checked`, `@unless`.
+`@forelse/@empty` (порожні стани), `$loop->first/last/iteration`, `@include` (бачить змінні
+батьківського представлення) проти `@each` (ізольований partial для кожного елемента + представлення
+для порожнього списку), `@isset`, `@env('local')`, `@once` + `@push('scripts')` → `@stack('scripts')`,
+`@selected`, `@checked`, `@unless`.
 
-### Escaping
+### Тексти, числа, дати
 
-`{{ $value }}` runs `htmlspecialchars()`: review bodies and titles are user data and are always
-printed escaped. `{!! $value !!}` prints raw HTML — never use it with user input. The XSS demo is
-part of stage 8.
+- Тексти — лише через `__('ui.…')`; кількості — `trans_choice('ui.counts.books', $n)` з трьома
+  українськими формами («1 книга / 2 книги / 5 книг»).
+- Числа — `Number::format()` (локаль застосунку: «1 234,5»), ціни —
+  `Number::currency($price / 100, in: 'UAH', locale: 'uk')` → «1 234,50 ₴».
+- Дати — Carbon із локаллю `uk`: `translatedFormat('j F Y')` → «15 жовтня 2026»,
+  `diffForHumans()` → «3 години тому».
 
-## Exercise
+### Екранування
 
-1. Add `GET /tags/{tag:slug}` that lists books with the tag (reuse `cardQuery()`), and a
-   "tag" filter + chip in the catalog.
-2. Turn `x-rating-stars` into a class component and unit-test the rounding.
-3. Add `Route::resource('warehouses', …)->only(['index', 'show'])` instead of the two routes —
-   what changes in `route:list`?
-4. Remove `->withQueryString()` and watch the filters disappear on page 2.
+`{{ $value }}` виконує `htmlspecialchars()`: тексти відгуків і назви — це дані від користувачів,
+і вони завжди виводяться екранованими. `{!! $value !!}` виводить сирий HTML — ніколи не
+застосовуйте його до введення користувача (у проєкті так виводяться лише тексти з наших власних
+lang-файлів). Демонстрація XSS — частина етапу 8.
+
+## Вправа
+
+1. Додайте `GET /tags/{tag:slug}`, що показує книги з тегом (перевикористайте `cardQuery()`), а
+   також фільтр «тег» і відповідний чип у каталозі.
+2. Перетворіть `x-rating-stars` на класовий компонент і покрийте юніт-тестом округлення.
+3. Замініть два маршрути на `Route::resource('warehouses', …)->only(['index', 'show'])` — що
+   зміниться в `route:list`?
+4. Приберіть `->withQueryString()` і подивіться, як фільтри зникають на другій сторінці.

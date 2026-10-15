@@ -12,6 +12,7 @@ use App\Models\Warehouse;
 use Database\Factories\Concerns\GeneratesUniqueValues;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Book>
@@ -25,21 +26,23 @@ class BookFactory extends Factory
      */
     public function definition(): array
     {
-        $title = rtrim(fake()->sentence(fake()->numberBetween(1, 5)), '.');
+        // Ukrainian text from Faker's uk_UA corpus (realText); trailing punctuation removed
+        // with a /u regex (rtrim() is byte-based and would cut multibyte letters).
+        $title = Str::ucfirst(preg_replace('/[\s\p{P}]+$/u', '', fake()->realTextBetween(12, 40)));
         $publishedAt = fake()->optional(0.85)->dateTimeBetween('-40 years', 'now');
 
         return [
             'title' => $title,
             'slug' => static::uniqueSlug($title),
             'isbn' => static::uniqueIsbn(),
-            'price' => fake()->numberBetween(299, 9999), // cents: $2.99 .. $99.99
+            'price' => fake()->numberBetween(9900, 99900), // kopecks: 99 ₴ .. 999 ₴
             'published_year' => $publishedAt?->format('Y'),
             'format' => fake()->randomElement(BookFormat::cases())->value,
             'genre_id' => Genre::factory(),
             'published_at' => $publishedAt,
             'meta' => [
                 'pages' => fake()->numberBetween(80, 1200),
-                'language' => fake()->randomElement(['en', 'en', 'en', 'de', 'fr', 'es', 'uk']),
+                'language' => fake()->randomElement(['uk', 'uk', 'uk', 'en', 'de', 'fr', 'pl']),
                 'publisher' => fake()->company(),
             ],
         ];

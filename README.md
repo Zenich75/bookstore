@@ -1,16 +1,16 @@
-# Bookstore Warehouse
+# Книжковий склад (Bookstore Warehouse)
 
-An educational Laravel 13 project. It builds a small bookstore warehouse (books, stock,
-suppliers, orders) step by step, each stage demonstrating a group of Laravel features.
-Lesson notes live in [`docs/`](docs).
+Навчальний проєкт на Laravel 13. Крок за кроком будуємо невеликий книжковий склад (книги,
+залишки, постачальники, замовлення); кожен етап демонструє групу можливостей Laravel.
+Конспекти уроків — у [`docs/`](docs), терміни — у [глосарії](docs/glossary.md).
 
-## Stack
+## Стек
 
 Laravel 13 · PHP 8.3+ · MySQL 8.4 · Mailpit · Laravel Sail · Blade · Pest · Debugbar
 
-## Getting started
+## Запуск
 
-Requirements: Docker and PHP/Composer on the host (or install vendor via the Sail container).
+Потрібні Docker і PHP/Composer на хості (або встановіть `vendor` через контейнер Sail).
 
 ```bash
 cp .env.example .env
@@ -22,28 +22,28 @@ composer install
 npm install && npm run build              # Tailwind assets (or `npm run dev`)
 ```
 
-Demo data volume is controlled by `SEED_SCALE` (`small` by default, `full` ≈ 50k books /
-200k reviews, ~1.5 min):
+Обсяг демонстраційних даних задає `SEED_SCALE` (`small` за замовчуванням, `full` ≈ 50 тис. книг /
+200 тис. відгуків, ~1,5–2 хв):
 
 ```bash
 docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --seed
 ```
 
-Seeded accounts (password `password`): `admin@example.com`, `manager1..5@example.com`.
+Облікові записи з сидерів (пароль `password`): `admin@example.com`, `manager1..5@example.com`.
 
-Tip: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
+Порада: `alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'`.
 
-| Service | URL |
+| Сервіс | Адреса |
 |---|---|
-| App | <http://localhost> |
+| Застосунок | <http://localhost> |
 | Mailpit | <http://localhost:8025> |
-| Relations lab | <http://localhost/lab/relations> |
-| N+1 lab | <http://localhost/lab/n-plus-one> |
-| Collections lab | <http://localhost/lab/collections> |
-| Reports | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
-| MySQL (host) | `127.0.0.1:3307`, user `sail` / `password` |
+| Лабораторія зв’язків | <http://localhost/lab/relations> |
+| Лабораторія N+1 | <http://localhost/lab/n-plus-one> |
+| Лабораторія колекцій | <http://localhost/lab/collections> |
+| Звіти | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
+| MySQL (з хоста) | `127.0.0.1:3307`, користувач `sail` / `password` |
 
-Useful commands:
+Корисні команди:
 
 ```bash
 ./vendor/bin/sail artisan test   # Pest test suite
@@ -51,23 +51,37 @@ Useful commands:
 ./vendor/bin/sail down           # stop containers
 ```
 
-`MODEL_STRICT` (default `true`) toggles Eloquent strict mode — see
+`MODEL_STRICT` (за замовчуванням `true`) вмикає суворий режим Eloquent — див.
 [docs/00-setup.md](docs/00-setup.md).
 
-## Lesson map
+## Мова інтерфейсу
 
-| Stage | Topic | Notes |
+Інтерфейс, лабораторії та документація — українською; код, ідентифікатори й коментарі в коді —
+англійською.
+
+- `APP_LOCALE=uk`, `APP_FALLBACK_LOCALE=en`, `APP_FAKER_LOCALE=uk_UA`.
+- Тексти інтерфейсу — у `lang/{uk,en}/{ui,lab,reports,enums}.php`, у шаблонах — лише `__()` і
+  `trans_choice()` (українські форми множини: 1 книга / 2 книги / 5 книг).
+- Повідомлення фреймворку (`validation`, `auth`, `pagination`, `passwords`) — пакет
+  `laravel-lang/common` (`php artisan lang:add uk`). Команда `lang:update` може перезаписати
+  ручні правки в цих файлах.
+- Назви enum — метод `label()`; ціни — у гривнях: `Number::currency($kopecks / 100, in: 'UAH', locale: 'uk')`.
+- Слаги завжди ASCII: `Str::slug($value, '-', 'uk')` («Тіні забутих предків» → `tini-zabutykh-predkiv`).
+
+## Карта уроків
+
+| Етап | Тема | Конспект |
 |---|---|---|
-| 0 | Project setup: Sail, Debugbar, strict mode, database queue | [docs/00-setup.md](docs/00-setup.md) |
-| 1 | Schema, models (PHP attributes), enums, factories, seeders | [docs/01-schema.md](docs/01-schema.md) |
-| 2 | Eloquent relationships, custom pivot, morph map, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
-| 3 | Routes (bindings, scoped, withTrashed, groups, fallback), Blade layouts & components, catalog | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
-| 4 | N+1: strict mode, profiler, 19-variant lab, constant-query tests | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
-| 5 | Collections vs Query Builder, chunking/lazy/cursor, reports, CSV streaming | [docs/05-collections.md](docs/05-collections.md) |
-| 6 | _TBD_ | |
-| 7 | _TBD_ | |
-| 8 | _TBD_ | |
-| 9 | _TBD_ | |
-| 10 | _TBD_ | |
+| 0 | Налаштування проєкту: Sail, Debugbar, суворий режим, черга в базі даних | [docs/00-setup.md](docs/00-setup.md) |
+| 1 | Схема БД, моделі (PHP-атрибути), enum, фабрики, сидери | [docs/01-schema.md](docs/01-schema.md) |
+| 2 | Зв’язки Eloquent, власна pivot-модель, мапа морфів, `/lab/relations` | [docs/02-relations.md](docs/02-relations.md) |
+| 3 | Маршрути (прив’язки, scoped, withTrashed, групи, fallback), макети й компоненти Blade, каталог | [docs/03-routes-blade.md](docs/03-routes-blade.md) |
+| 4 | N+1: суворий режим, профайлер, лабораторія з 19 варіантів, тести сталої кількості запитів | [docs/04-n-plus-one.md](docs/04-n-plus-one.md) |
+| 5 | Колекції проти Query Builder, chunk/lazy/cursor, звіти, потокове CSV | [docs/05-collections.md](docs/05-collections.md) |
+| 6 | _буде згодом_ | |
+| 7 | _буде згодом_ | |
+| 8 | _буде згодом_ | |
+| 9 | _буде згодом_ | |
+| 10 | _буде згодом_ | |
 
-New lessons start from [docs/_template.md](docs/_template.md).
+Нові уроки починайте з шаблону [docs/_template.md](docs/_template.md).

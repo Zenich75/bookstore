@@ -22,9 +22,9 @@ function rowCounts(): array
 test('lab page renders', function () {
     $this->get('/lab/relations')
         ->assertOk()
-        ->assertSee('Lab: Eloquent relationships')
+        ->assertSee(__('lab.relations.title'))
         ->assertSee('hasOneThrough')
-        ->assertDontSee('Error:');
+        ->assertDontSee(__('lab.common.error'));
 });
 
 test('every lab example runs without errors or lazy loading', function () {

@@ -21,7 +21,7 @@ class UserSeeder extends Seeder
         DB::transaction(function () use ($scale) {
             // A few well-known accounts: created as models (readable, events would fire).
             User::factory()->admin()->create([
-                'name' => 'Admin',
+                'name' => 'Адміністратор',
                 'email' => 'admin@example.com',
             ]);
 

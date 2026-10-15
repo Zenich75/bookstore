@@ -1,1 +1,1 @@
-<li class="py-2 text-stone-500">No authors yet.</li>
+<li class="py-2 text-stone-500">{{ __('ui.authors.empty') }}</li>

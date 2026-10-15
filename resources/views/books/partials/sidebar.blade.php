@@ -8,33 +8,33 @@
     @endforeach
 
     <div>
-        <label for="sort" class="mb-1 block font-semibold">Sort</label>
+        <label for="sort" class="mb-1 block font-semibold">{{ __('ui.catalog.sort') }}</label>
         <select id="sort" name="sort" class="w-full rounded border border-stone-300 bg-white px-2 py-1" data-autosubmit>
-            @foreach ($sorts as $value => $label)
-                <option value="{{ $value }}" @selected($sort === $value)>{{ $label }}</option>
+            @foreach ($sorts as $value)
+                <option value="{{ $value }}" @selected($sort === $value)>{{ __('ui.catalog.sorts.'.$value) }}</option>
             @endforeach
         </select>
     </div>
 
     <div>
-        <label for="format" class="mb-1 block font-semibold">Format</label>
+        <label for="format" class="mb-1 block font-semibold">{{ __('ui.catalog.format') }}</label>
         <select id="format" name="format" class="w-full rounded border border-stone-300 bg-white px-2 py-1" data-autosubmit>
-            <option value="">Any</option>
+            <option value="">{{ __('ui.catalog.any') }}</option>
             @foreach ($formats as $format)
-                <option value="{{ $format->value }}" @selected(request('format') === $format->value)>{{ ucfirst($format->value) }}</option>
+                <option value="{{ $format->value }}" @selected(request('format') === $format->value)>{{ $format->label() }}</option>
             @endforeach
         </select>
     </div>
 
     <label class="flex items-center gap-2">
         <input type="checkbox" name="in_stock" value="1" @checked(request()->boolean('in_stock')) data-autosubmit>
-        In stock only
+        {{ __('ui.catalog.in_stock_only') }}
     </label>
 
-    <noscript><button type="submit" class="rounded bg-amber-600 px-3 py-1 text-white">Apply</button></noscript>
+    <noscript><button type="submit" class="rounded bg-amber-600 px-3 py-1 text-white">{{ __('ui.catalog.apply') }}</button></noscript>
 
     <div>
-        <h3 class="mb-2 font-semibold">Genres</h3>
+        <h3 class="mb-2 font-semibold">{{ __('ui.catalog.genres') }}</h3>
         <x-genre-tree :genres="$genreTree" :active="$activeGenre" />
     </div>
 </form>

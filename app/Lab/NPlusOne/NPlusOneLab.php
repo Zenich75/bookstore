@@ -135,16 +135,16 @@ final class NPlusOneLab
 
     private function define(): void
     {
-        $this->add('bad', 'a', 'All lazy',
-            'No eager loading. Blade touches authors, genre, cover and the review count of every book: 1 + 4 × 50 queries. Runs inside LazyLoading::allowDuring().',
+        $this->add('bad', 'a', __('lab.n_plus_one.variants.bad'),
+            __('lab.n_plus_one.variants.bad_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->get();
 
                 return $this->render($books);
             }, lazy: true);
 
-        $this->add('strict', 'b', 'All lazy, strict mode on',
-            'The same code without allowDuring(): strict mode turns the first lazy load into an exception instead of 200 silent queries.',
+        $this->add('strict', 'b', __('lab.n_plus_one.variants.strict'),
+            __('lab.n_plus_one.variants.strict_d'),
             function (array $ids) {
                 try {
                     $books = Book::whereIn('id', $ids)->get();
@@ -156,16 +156,16 @@ final class NPlusOneLab
                 }
             }, ranked: false);
 
-        $this->add('with-basic', 'c', 'with([authors, genre])',
-            'Eager-loads two relations: 3 queries instead of 101, but cover and review count are still lazy (2 × 50).',
+        $this->add('with-basic', 'c', __('lab.n_plus_one.variants.with-basic'),
+            __('lab.n_plus_one.variants.with-basic_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->with(['authors', 'genre'])->get();
 
                 return $this->render($books);
             }, lazy: true);
 
-        $this->add('with-full', 'd', 'with() + cover + withCount',
-            'Everything the card needs is loaded up front; the count is a subquery. Constant query count, runs with strict mode on.',
+        $this->add('with-full', 'd', __('lab.n_plus_one.variants.with-full'),
+            __('lab.n_plus_one.variants.with-full_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover'])
@@ -175,8 +175,8 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('count-in-php', 'e', '->approvedReviews->count() instead of withCount',
-            'No N+1, but every review is hydrated just to be counted. Compare memory with (d), which gets the same number from a COUNT(*) subquery.',
+        $this->add('count-in-php', 'e', __('lab.n_plus_one.variants.count-in-php'),
+            __('lab.n_plus_one.variants.count-in-php_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'approvedReviews'])
@@ -186,16 +186,16 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('feed-lazy', 'f', 'Feed: reviews.user.profile lazily',
-            'The feed lists reviews with reviewer name and avatar: per book reviews, per review user, per user profile — N+1 nested three levels deep.',
+        $this->add('feed-lazy', 'f', __('lab.n_plus_one.variants.feed-lazy'),
+            __('lab.n_plus_one.variants.feed-lazy_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->get();
 
                 return $this->render($books, feed: 'approvedReviews');
             }, lazy: true);
 
-        $this->add('feed-nested', 'g', "Feed: with('approvedReviews.user.profile')",
-            'Dot notation eager-loads the whole chain: one query per level, regardless of how many books or reviews.',
+        $this->add('feed-nested', 'g', __('lab.n_plus_one.variants.feed-nested'),
+            __('lab.n_plus_one.variants.feed-nested_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'approvedReviews.user.profile'])
@@ -205,8 +205,8 @@ final class NPlusOneLab
                 return $this->render($books, feed: 'approvedReviews');
             });
 
-        $this->add('feed-limited', 'h', 'Feed: latest 3 approved reviews per book',
-            'A constrained eager load with ->limit(3). Since Laravel 11 the limit is applied per parent: the SQL wraps the query in ROW_NUMBER() OVER (PARTITION BY book_id ORDER BY id DESC) and keeps rows <= 3. Fewer reviews, users and profiles are loaded than in (g).',
+        $this->add('feed-limited', 'h', __('lab.n_plus_one.variants.feed-limited'),
+            __('lab.n_plus_one.variants.feed-limited_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with([
@@ -220,8 +220,8 @@ final class NPlusOneLab
                 return $this->render($books, feed: 'approvedReviews');
             });
 
-        $this->add('load-missing', 'i', 'load() / loadMissing() on a fetched collection',
-            'When the collection already exists (e.g. passed from elsewhere), load() eager-loads for all models at once. loadMissing() skips relations that are already loaded — the second call runs no queries.',
+        $this->add('load-missing', 'i', __('lab.n_plus_one.variants.load-missing'),
+            __('lab.n_plus_one.variants.load-missing_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)->get();
 
@@ -231,16 +231,16 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('images-lazy', 'j1', 'Images feed: morphTo, nested relations lazy',
-            "with('imageable') loads owners with one query per type, but the book's genre and the author's books are then lazy-loaded per image.",
+        $this->add('images-lazy', 'j1', __('lab.n_plus_one.variants.images-lazy'),
+            __('lab.n_plus_one.variants.images-lazy_d'),
             function (array $ids) {
                 $images = $this->imagesQuery($ids)->with('imageable')->get();
 
                 return $this->renderImages($images);
             }, lazy: true);
 
-        $this->add('images-morph-with', 'j2', 'Images feed: morphWith()',
-            'morphWith() declares nested eager loads per morph type: books get genre, authors get books.',
+        $this->add('images-morph-with', 'j2', __('lab.n_plus_one.variants.images-morph-with'),
+            __('lab.n_plus_one.variants.images-morph-with_d'),
             function (array $ids) {
                 $images = $this->imagesQuery($ids)
                     ->with(['imageable' => fn (MorphTo $morphTo) => $morphTo->morphWith([
@@ -252,8 +252,8 @@ final class NPlusOneLab
                 return $this->renderImages($images);
             });
 
-        $this->add('over-eager', 'k1', 'Over-eager: load everything',
-            'No N+1, but loads relations the page never shows (images, tags, genres, warehouses, stocks, every review with user and profile) and every column. More queries, rows and memory than (d).',
+        $this->add('over-eager', 'k1', __('lab.n_plus_one.variants.over-eager'),
+            __('lab.n_plus_one.variants.over-eager_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'images', 'tags', 'genres', 'warehouses', 'stocks', 'reviews.user.profile'])
@@ -263,8 +263,8 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('select-columns', 'k2', 'Select only needed columns',
-            'Same queries as (d) but narrower rows. Foreign keys must be selected too: genre_id on books for genre, and imageable_type/imageable_id on images for cover (pivot keys are added automatically).',
+        $this->add('select-columns', 'k2', __('lab.n_plus_one.variants.select-columns'),
+            __('lab.n_plus_one.variants.select-columns_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->select(['id', 'title', 'genre_id'])
@@ -279,8 +279,8 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('select-missing-fk', 'k3', 'Broken: select without genre_id',
-            "genre_id is not selected, so the genre relation can't be matched and is silently null for every book. With strict mode's missing-attribute check this throws MissingAttributeException instead; it is switched off here to show the silent failure.",
+        $this->add('select-missing-fk', 'k3', __('lab.n_plus_one.variants.select-missing-fk'),
+            __('lab.n_plus_one.variants.select-missing-fk_d'),
             function (array $ids) {
                 $books = Book::whereIn('id', $ids)
                     ->select(['id', 'title']) // forgot genre_id!
@@ -295,8 +295,8 @@ final class NPlusOneLab
                 return $this->render($books);
             }, allowMissingAttributes: true, ranked: false);
 
-        $this->add('accessor-lazy', 'l1', 'Hidden N+1 in an accessor',
-            '{{ $book->author_names }} looks like a column, but the LabBook accessor reads $this->authors — one query per book.',
+        $this->add('accessor-lazy', 'l1', __('lab.n_plus_one.variants.accessor-lazy'),
+            __('lab.n_plus_one.variants.accessor-lazy_d'),
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['genre', 'cover'])
@@ -306,8 +306,8 @@ final class NPlusOneLab
                 return $this->render($books);
             }, lazy: true);
 
-        $this->add('accessor-eager', 'l2', 'Accessor with its relation eager-loaded',
-            'Same accessor; with(authors) makes it free.',
+        $this->add('accessor-eager', 'l2', __('lab.n_plus_one.variants.accessor-eager'),
+            __('lab.n_plus_one.variants.accessor-eager_d'),
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover'])
@@ -317,8 +317,8 @@ final class NPlusOneLab
                 return $this->render($books);
             });
 
-        $this->add('inverse-lazy', 'm1', 'Inverse N+1: $review->book',
-            'Reviews are eager-loaded from the book, but the partial shows $review->book->title: each review loads its (already known!) book again.',
+        $this->add('inverse-lazy', 'm1', __('lab.n_plus_one.variants.inverse-lazy'),
+            __('lab.n_plus_one.variants.inverse-lazy_d'),
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'labReviews.user.profile'])
@@ -328,8 +328,8 @@ final class NPlusOneLab
                 return $this->render($books, feed: 'labReviews', showReviewBook: true);
             }, lazy: true);
 
-        $this->add('inverse-chaperone', 'm2', 'Inverse relation with ->chaperone()',
-            "hasMany(...)->chaperone('book') sets each review's book relation to the parent model after loading: no extra queries.",
+        $this->add('inverse-chaperone', 'm2', __('lab.n_plus_one.variants.inverse-chaperone'),
+            __('lab.n_plus_one.variants.inverse-chaperone_d'),
             function (array $ids) {
                 $books = LabBook::whereIn('id', $ids)
                     ->with(['authors', 'genre', 'cover', 'labReviewsChaperoned.user.profile'])
@@ -342,8 +342,8 @@ final class NPlusOneLab
         // Automatic eager loading exists since Laravel 12.8.
         if (method_exists(Collection::class, 'withRelationshipAutoloading')
             && method_exists(Model::class, 'automaticallyEagerLoadRelationships')) {
-            $this->add('autoload', 'n', 'Automatic eager loading',
-                'withRelationshipAutoloading(): the first time a relation is touched on one model, it is loaded for the whole collection. Works with strict mode (autoload runs before the lazy-loading check). Model::automaticallyEagerLoadRelationships() enables it globally — not used in this project.',
+            $this->add('autoload', 'n', __('lab.n_plus_one.variants.autoload'),
+                __('lab.n_plus_one.variants.autoload_d'),
                 function (array $ids) {
                     $books = Book::whereIn('id', $ids)->get()->withRelationshipAutoloading();
 

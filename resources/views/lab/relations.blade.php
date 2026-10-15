@@ -1,8 +1,6 @@
-<x-layouts.app title="Lab: Eloquent relationships">
+<x-layouts.app :title="__('lab.relations.title')">
     <p class="-mt-2 mb-6 max-w-3xl text-sm text-stone-600">
-        Each example shows the code that ran, its result and the SQL it executed.
-        Strict mode is on, so every relation is loaded explicitly.
-        Write examples run inside a transaction that is rolled back.
+        {{ __('lab.relations.intro') }}
     </p>
 
     <div class="grid gap-8 lg:grid-cols-[14rem_1fr]">
@@ -32,15 +30,15 @@
 
                                 <div class="grid gap-4 xl:grid-cols-2">
                                     <div class="min-w-0">
-                                        <h3 class="mb-1 text-xs font-semibold uppercase text-stone-400">Code</h3>
+                                        <h3 class="mb-1 text-xs font-semibold uppercase text-stone-400">{{ __('lab.common.code') }}</h3>
                                         <pre class="overflow-x-auto rounded bg-stone-900 p-3 text-xs text-stone-100">{{ $example['code'] }}</pre>
                                     </div>
                                     <div class="min-w-0">
-                                        <h3 class="mb-1 text-xs font-semibold uppercase text-stone-400">Result</h3>
+                                        <h3 class="mb-1 text-xs font-semibold uppercase text-stone-400">{{ __('lab.common.result') }}</h3>
                                         @if ($example['skipped'])
-                                            <p class="text-sm italic text-stone-500">Skipped: {{ $example['skipped'] }}</p>
+                                            <p class="text-sm italic text-stone-500">{{ __('lab.common.skipped', ['reason' => $example['skipped']]) }}</p>
                                         @elseif ($example['error'])
-                                            <p class="rounded bg-red-50 p-3 text-sm text-red-800"><strong>Error:</strong> {{ $example['error'] }}</p>
+                                            <p class="rounded bg-red-50 p-3 text-sm text-red-800"><strong>{{ __('lab.common.error') }}</strong> {{ $example['error'] }}</p>
                                         @else
                                             <pre class="max-h-72 overflow-auto rounded bg-stone-100 p-3 text-xs">{{ json_encode($example['result'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
                                         @endif
@@ -49,7 +47,7 @@
 
                                 <x-slot:footer>
                                     <details>
-                                        <summary class="cursor-pointer">SQL — {{ count($example['queries']) }} {{ Str::plural('query', count($example['queries'])) }}</summary>
+                                        <summary class="cursor-pointer">{{ __('lab.common.sql', ['queries' => trans_choice('lab.common.queries', count($example['queries']))]) }}</summary>
                                         <ol class="mt-2 list-decimal space-y-1 pl-5">
                                             @foreach ($example['queries'] as $sql)
                                                 <li><code class="break-all text-xs">{{ $sql }}</code></li>

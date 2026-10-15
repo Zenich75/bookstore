@@ -6,6 +6,7 @@ use App\Models\Genre;
 use App\Models\Warehouse;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     $this->genre = Genre::factory()->create();
@@ -90,12 +91,12 @@ test('soft-deleted book: 404 publicly, 200 in admin (withTrashed)', function () 
     $this->get("/authors/{$this->author->slug}/books/{$this->book->slug}")->assertNotFound();
     $this->get(route('admin.books.show', $this->book))
         ->assertOk()
-        ->assertSee('Soft-deleted');
+        ->assertSee(Str::before(__('ui.admin.soft_deleted'), ':time'));
 });
 
 test('fallback route renders the custom 404 page', function () {
     $this->get('/definitely/not/a/page')
         ->assertNotFound()
-        ->assertSee('Page not found')
-        ->assertSee('Back to the catalog');
+        ->assertSee(__('ui.errors.not_found.title'))
+        ->assertSee(__('ui.errors.not_found.back'));
 });

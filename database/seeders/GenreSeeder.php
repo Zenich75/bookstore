@@ -15,29 +15,29 @@ class GenreSeeder extends Seeder
      * @var array<string, list<string>>
      */
     private const TREE = [
-        'Fiction' => ['Literary Fiction', 'Historical Fiction', 'Contemporary Fiction'],
-        'Mystery & Thriller' => ['Crime', 'Detective', 'Psychological Thriller'],
-        'Science Fiction' => ['Space Opera', 'Cyberpunk', 'Dystopian'],
-        'Fantasy' => ['Epic Fantasy', 'Urban Fantasy', 'Dark Fantasy'],
-        'Romance' => ['Romantic Comedy', 'Historical Romance', 'Paranormal Romance'],
-        'Horror' => ['Gothic Horror', 'Supernatural Horror'],
-        'Biography & Memoir' => ['Autobiography', 'Political Biography', 'Travel Memoir'],
-        'History' => ['Ancient History', 'Military History', 'World History'],
-        'Science & Technology' => ['Popular Science', 'Computer Science', 'Mathematics'],
-        'Children\'s Books' => ['Picture Books', 'Young Adult', 'Middle Grade'],
-        'Business & Economics' => ['Management', 'Personal Finance'],
+        'Художня література' => ['Сучасна проза', 'Історичний роман', 'Класична література'],
+        'Детективи та трилери' => ['Кримінальний детектив', 'Класичний детектив', 'Психологічний трилер'],
+        'Наукова фантастика' => ['Космічна опера', 'Кіберпанк', 'Антиутопія'],
+        'Фентезі' => ['Епічне фентезі', 'Міське фентезі', 'Темне фентезі'],
+        'Любовний роман' => ['Романтична комедія', 'Історичний любовний роман', 'Паранормальний любовний роман'],
+        'Жахи' => ['Готичні жахи', 'Містичні жахи'],
+        'Біографії та мемуари' => ['Автобіографія', 'Політична біографія', 'Мемуари мандрівників'],
+        'Історія' => ['Стародавня історія', 'Воєнна історія', 'Світова історія'],
+        'Наука і техніка' => ['Науково-популярна література', 'Інформатика', 'Математика'],
+        'Дитяча література' => ['Книжки з картинками', 'Підліткова література', 'Для молодшого шкільного віку'],
+        'Бізнес і економіка' => ['Менеджмент', 'Особисті фінанси'],
     ];
 
     public function run(): void
     {
         DB::transaction(function () {
             foreach (self::TREE as $rootName => $children) {
-                $root = Genre::create(['name' => $rootName, 'slug' => Str::slug($rootName)]);
+                $root = Genre::create(['name' => $rootName, 'slug' => Str::slug($rootName, '-', 'uk')]);
 
                 foreach ($children as $childName) {
                     Genre::create([
                         'name' => $childName,
-                        'slug' => Str::slug($childName),
+                        'slug' => Str::slug($childName, '-', 'uk'),
                         'parent_id' => $root->id,
                     ]);
                 }

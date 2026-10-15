@@ -1,14 +1,14 @@
 <x-layouts.app :title="$book->title">
     {{-- Genre breadcrumb: parent → genre (genre.parent eager-loaded). --}}
     <nav class="-mt-4 mb-6 text-sm text-stone-500">
-        <a href="{{ route('books.index') }}" class="hover:underline">Catalog</a>
+        <a href="{{ route('books.index') }}" class="hover:underline">{{ __('ui.nav.catalog') }}</a>
         @if ($book->genre->parent)
             / <a href="{{ route('genres.show', $book->genre->parent) }}" class="hover:underline">{{ $book->genre->parent->name }}</a>
         @endif
         / <a href="{{ route('genres.show', $book->genre) }}" class="hover:underline">{{ $book->genre->name }}</a>
         @isset($viaAuthor)
             <span class="ml-2 rounded bg-stone-200 px-2 py-0.5 text-xs">
-                via <a href="{{ route('authors.show', $viaAuthor) }}" class="underline">{{ $viaAuthor->first_name }} {{ $viaAuthor->last_name }}</a>
+                {{ __('ui.book.via') }} <a href="{{ route('authors.show', $viaAuthor) }}" class="underline">{{ $viaAuthor->first_name }} {{ $viaAuthor->last_name }}</a>
             </span>
         @endisset
     </nav>
@@ -16,17 +16,17 @@
     <div class="grid gap-8 md:grid-cols-[16rem_1fr]">
         <div class="space-y-4">
             <div class="flex h-80 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-stone-200 p-4 text-center text-lg font-semibold text-stone-600"
-                 title="{{ $book->cover?->path ?? 'No cover' }}">
+                 title="{{ $book->cover?->path ?? __('ui.card.no_cover') }}">
                 {{ $book->title }}
             </div>
             <x-card>
                 <dl class="space-y-1 text-sm">
-                    <div class="flex justify-between"><dt class="text-stone-500">Price</dt><dd class="font-semibold">{{ Number::currency($book->price / 100, 'USD') }}</dd></div>
-                    <div class="flex justify-between"><dt class="text-stone-500">Format</dt><dd>{{ ucfirst($book->format->value) }}</dd></div>
-                    <div class="flex justify-between"><dt class="text-stone-500">ISBN</dt><dd>{{ $book->isbn }}</dd></div>
-                    <div class="flex justify-between"><dt class="text-stone-500">Published</dt><dd>{{ $book->published_at?->format('M j, Y') ?? 'Unpublished' }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.price') }}</dt><dd class="font-semibold">{{ Number::currency($book->price / 100, in: 'UAH', locale: 'uk') }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.format') }}</dt><dd class="text-right">{{ $book->format->label() }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.isbn') }}</dt><dd>{{ $book->isbn }}</dd></div>
+                    <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.published') }}</dt><dd>{{ $book->published_at?->translatedFormat('j F Y') ?? __('ui.book.unpublished') }}</dd></div>
                     @isset($book->meta['pages'])
-                        <div class="flex justify-between"><dt class="text-stone-500">Pages</dt><dd>{{ $book->meta['pages'] }}</dd></div>
+                        <div class="flex justify-between gap-2"><dt class="text-stone-500">{{ __('ui.book.pages') }}</dt><dd>{{ $book->meta['pages'] }}</dd></div>
                     @endisset
                 </dl>
             </x-card>
@@ -38,10 +38,10 @@
                     {{-- $loop: first / last / iteration in a list of credits. --}}
                     @foreach ($book->authors as $author)
                         @if (! $loop->first){{ $loop->last ? ' and ' : ', ' }}@endif<a href="{{ route('authors.show', $author) }}" class="font-medium text-amber-800 hover:underline">{{ $author->first_name }} {{ $author->last_name }}</a>
-                        <span class="text-xs text-stone-400">({{ str_replace('_', '-', $author->credit->role) }})</span>
+                        <span class="text-xs text-stone-400">({{ Str::lower(App\Enums\AuthorRole::from($author->credit->role)->label()) }})</span>
                     @endforeach
                 </p>
-                <div class="mt-2"><x-rating-stars :rating="$book->approved_reviews_avg_rating" /> <span class="text-sm text-stone-500">· {{ $book->approved_reviews_count }} approved reviews</span></div>
+                <div class="mt-2"><x-rating-stars :rating="$book->approved_reviews_avg_rating" /> <span class="text-sm text-stone-500">· {{ trans_choice('ui.counts.approved_reviews', $book->approved_reviews_count) }}</span></div>
             </section>
 
             @if ($book->genres->isNotEmpty() || $book->tags->isNotEmpty())
@@ -56,7 +56,7 @@
             @endif
 
             <x-card>
-                <x-slot:header>Stock by warehouse</x-slot:header>
+                <x-slot:header>{{ __('ui.book.stock_by_warehouse') }}</x-slot:header>
                 <table class="w-full text-sm">
                     <tbody>
                         @forelse ($book->warehouses as $warehouse)
@@ -68,29 +68,29 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td class="py-1.5 text-stone-500">Not stocked in any warehouse.</td></tr>
+                            <tr><td class="py-1.5 text-stone-500">{{ __('ui.book.not_stocked') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </x-card>
 
             <div class="grid gap-4 md:grid-cols-2">
-                @foreach (['Latest review' => $book->latestReview, 'Best review' => $book->bestReview] as $heading => $review)
+                @foreach ([__('ui.book.latest_review') => $book->latestReview, __('ui.book.best_review') => $book->bestReview] as $heading => $review)
                     <x-card>
                         <x-slot:header>{{ $heading }}</x-slot:header>
                         @if ($review)
                             <x-rating-stars :rating="$review->rating" />
                             <p class="mt-2 text-sm">{{ Str::limit($review->body, 160) }}</p>
-                            <x-slot:footer>{{ $review->user?->name ?? 'Deleted user' }} · {{ $review->created_at->diffForHumans() }}</x-slot:footer>
+                            <x-slot:footer>{{ $review->user?->name ?? __('ui.book.deleted_user') }} · {{ $review->created_at->diffForHumans() }}</x-slot:footer>
                         @else
-                            <p class="text-sm text-stone-500">No reviews yet.</p>
+                            <p class="text-sm text-stone-500">{{ __('ui.book.no_reviews') }}</p>
                         @endif
                     </x-card>
                 @endforeach
             </div>
 
             <section>
-                <h2 class="mb-3 text-lg font-semibold">Reviews ({{ $reviews->total() }})</h2>
+                <h2 class="mb-3 text-lg font-semibold">{{ __('ui.book.reviews_heading', ['count' => $reviews->total()]) }}</h2>
                 <div class="space-y-3">
                     @forelse ($reviews as $review)
                         <x-card>
@@ -102,7 +102,7 @@
                             <p class="mt-2 text-sm text-stone-700">{{ $review->body }}</p>
                         </x-card>
                     @empty
-                        <p class="text-sm text-stone-500">No approved reviews yet.</p>
+                        <p class="text-sm text-stone-500">{{ __('ui.book.no_approved_reviews') }}</p>
                     @endforelse
                 </div>
                 <div class="mt-4">{{ $reviews->links() }}</div>

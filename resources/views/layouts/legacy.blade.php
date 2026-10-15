@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Page') — {{ config('app.name') }}</title>
+    <title>@yield('title', __('ui.layout.page')) — {{ config('app.name') }}</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -16,7 +16,7 @@
     <header class="border-b border-stone-200 bg-white">
         <nav class="mx-auto flex max-w-3xl gap-6 px-4 py-3">
             <a href="{{ route('home') }}" class="font-semibold text-amber-700">{{ config('app.name') }}</a>
-            <a href="{{ route('books.index') }}" class="text-sm">Catalog</a>
+            <a href="{{ route('books.index') }}" class="text-sm">{{ __('ui.nav.catalog') }}</a>
         </nav>
     </header>
 

@@ -18,7 +18,7 @@ class WarehouseFactory extends Factory
         $city = fake()->city();
 
         return [
-            'name' => $city.' Warehouse',
+            'name' => 'Склад '.$city,
             'city' => $city,
             'address' => fake()->streetAddress(),
         ];

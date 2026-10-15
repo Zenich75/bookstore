@@ -8,11 +8,11 @@ use Illuminate\Database\Seeder;
 class WarehouseSeeder extends Seeder
 {
     private const WAREHOUSES = [
-        ['name' => 'Central Warehouse', 'city' => 'Kyiv', 'address' => '12 Khreshchatyk St'],
-        ['name' => 'West Hub', 'city' => 'Lviv', 'address' => '5 Horodotska St'],
-        ['name' => 'East Hub', 'city' => 'Kharkiv', 'address' => '40 Sumska St'],
-        ['name' => 'South Hub', 'city' => 'Odesa', 'address' => '7 Deribasivska St'],
-        ['name' => 'Dnipro Depot', 'city' => 'Dnipro', 'address' => '101 Yavornytskoho Ave'],
+        ['name' => 'Центральний склад', 'city' => 'Київ', 'address' => 'вул. Хрещатик, 12'],
+        ['name' => 'Західний склад', 'city' => 'Львів', 'address' => 'вул. Городоцька, 5'],
+        ['name' => 'Східний склад', 'city' => 'Харків', 'address' => 'вул. Сумська, 40'],
+        ['name' => 'Південний склад', 'city' => 'Одеса', 'address' => 'вул. Дерибасівська, 7'],
+        ['name' => 'Дніпровський склад', 'city' => 'Дніпро', 'address' => 'просп. Яворницького, 101'],
     ];
 
     public function run(): void

@@ -22,9 +22,16 @@ Always run app commands through Sail: `./vendor/bin/sail artisan ...`, `./vendor
   properties like `$table`, `$fillable`, `$hidden`.
 - When a lesson compares syntaxes (attribute vs. property, new vs. legacy API), keep the legacy
   variant as a commented-out block right next to the modern one, with a short note.
-- Code, comments, commit messages and docs are in English.
-- Money is stored as integer cents (e.g. `price_cents` as `unsignedInteger`/`bigInteger`), never
-  floats or decimals; format only at the presentation layer.
+- Language: **all UI texts, docs and lab explanations are in Ukrainian via lang files**
+  (`lang/{uk,en}/{ui,lab,reports,enums}.php`, `__()` / `trans_choice()`, enum `->label()`);
+  **code, identifiers, comments and commit messages are in English**; follow `docs/glossary.md`
+  for terminology. No hardcoded UI strings in views or lab classes; add every key to both `uk`
+  and `en` (a test checks key parity and that no raw keys reach the HTML).
+- Money is stored as integer kopecks/cents (e.g. `price` as `unsignedInteger`), never floats or
+  decimals; display in UAH only at the presentation layer:
+  `Number::currency($cents / 100, in: 'UAH', locale: 'uk')`.
+- Slugs are ASCII: always `Str::slug($value, '-', 'uk')`. Dates: Carbon `translatedFormat()`.
+- Seed data is Ukrainian (Faker `uk_UA`).
 - Eloquent strict mode (`Model::shouldBeStrict()`) is on by default, controlled by `MODEL_STRICT`
   (`config('app.model_strict')`). Do not remove it; lessons that need lazy loading (N+1 demo)
   toggle the flag instead.
@@ -36,8 +43,8 @@ Always run app commands through Sail: `./vendor/bin/sail artisan ...`, `./vendor
 
 ## Lessons & docs
 
-- Each lesson/stage gets `docs/NN-topic.md` (e.g. `docs/03-relationships.md`) based on
-  `docs/_template.md` (Goal, Where to look in code, Key concepts, Exercise).
+- Each lesson/stage gets `docs/NN-topic.md` (e.g. `docs/03-relationships.md`), written in
+  Ukrainian, based on `docs/_template.md` (Мета, Де дивитися в коді, Ключові поняття, Вправа).
 - Update the lesson map in `README.md` when a stage is added.
 
 ## Finishing a task

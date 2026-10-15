@@ -17,13 +17,9 @@ class BookController extends Controller
 
     /**
      * Sort keys accepted by the catalog; anything else falls back to "newest".
+     * Labels: lang/{en,uk}/ui.php => catalog.sorts.*
      */
-    public const SORTS = [
-        'newest' => 'Newest',
-        'price_asc' => 'Price: low to high',
-        'price_desc' => 'Price: high to low',
-        'rating' => 'Rating',
-    ];
+    public const SORTS = ['newest', 'price_asc', 'price_desc', 'rating'];
 
     /**
      * Everything <x-book-card> reads. Strict mode is on, so the card would throw
@@ -53,7 +49,7 @@ class BookController extends Controller
             : null;
         $format = $request->enum('format', BookFormat::class);
         $inStock = $request->boolean('in_stock');
-        $sort = array_key_exists($sort = $request->string('sort', 'newest')->toString(), self::SORTS) ? $sort : 'newest';
+        $sort = in_array($sort = $request->string('sort', 'newest')->toString(), self::SORTS, true) ? $sort : 'newest';
 
         // Conditional query building with when(). These conditions move to
         // reusable local scopes in stage 6.
@@ -89,8 +85,8 @@ class BookController extends Controller
             'filters' => array_filter([
                 'genre' => $genre?->name,
                 'author' => $author ? $author->first_name.' '.$author->last_name : null,
-                'format' => $format ? ucfirst($format->value) : null,
-                'in_stock' => $inStock ? 'In stock' : null,
+                'format' => $format?->label(),
+                'in_stock' => $inStock ? __('ui.catalog.chip_in_stock') : null,
             ]),
             'activeGenre' => $genre,
             'sort' => $sort,

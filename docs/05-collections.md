@@ -1,77 +1,76 @@
-# 05 — Collections vs Query Builder
+# 05 — Колекції проти Query Builder
 
-## Goal
+## Мета
 
-Know where work should happen — in the database or in PHP — and what each choice costs.
-Compare return types, Eloquent Collection methods, relation queries vs loaded relations,
-aggregates, iteration strategies for large tables, mass updates and subqueries, all measured on
-the full dataset. Build two reports with the Query Builder and stream a CSV without loading it
-into memory.
+Розуміти, де має виконуватися робота — у базі даних чи в PHP — і скільки коштує кожен вибір.
+Порівняти типи результатів, методи Eloquent Collection, запит зв’язку проти завантаженого зв’язку,
+агрегати, стратегії обходу великих таблиць, масові оновлення й підзапити — усе виміряно на повному
+наборі даних. Побудувати два звіти на Query Builder і віддати CSV потоком, не завантажуючи його в пам’ять.
 
-Open **<http://localhost/lab/collections>** (one tab per section) and **<http://localhost/reports/stock>**.
+Відкрийте **<http://localhost/lab/collections>** (окрема вкладка на кожен розділ) і **<http://localhost/reports/stock>**.
 
-## Where to look in code
+## Де дивитися в коді
 
-- `app/Lab/CollectionExamples.php` — every comparison (each approach is the code shown on the page).
+- `app/Lab/CollectionExamples.php` — усі порівняння (кожен підхід — це код, показаний на сторінці).
 - `app/Lab/Collections/{Comparison,Approach}.php`, `app/Lab/Presenter.php`, `app/Lab/QueryProfiler.php`.
 - `app/Reports/StockByWarehouseGenreReport.php`, `app/Reports/TopAuthorsReport.php`.
-- `app/Http/Controllers/ReportController.php` — invokable, `->defaults('report', …)`, CSV `streamDownload`.
+- `app/Http/Controllers/ReportController.php` — invokable, `->defaults('report', …)`, CSV через `streamDownload`.
 - `tests/Feature/Reports/*`, `tests/Feature/Lab/LabCollectionsTest.php`.
 
-## Key concepts
+## Ключові поняття
 
-### Do it in SQL or in PHP?
+### У SQL чи в PHP?
 
-| Task | In SQL (Query Builder / Eloquent query) | In PHP (Collection) |
+| Задача | У SQL (Query Builder / запит Eloquent) | У PHP (колекція) |
 |---|---|---|
-| Filter, sort, paginate many rows | ✅ `where`, `orderBy`, indexes, `LIMIT` | only for rows already in memory |
-| Count / sum / avg / max | ✅ `count()`, `withCount`, `selectRaw('sum(...)')` | when the rows are loaded anyway |
-| Group + aggregate (reports) | ✅ `GROUP BY` returns a few rows | ❌ hydrates every row first |
-| "Does any exist?" | ✅ `exists()` | ❌ |
-| A few columns | ✅ `pluck()`, `select([...])` | ❌ `get()->pluck()` loads whole models |
-| Business logic per model (events, casts, accessors) | ❌ | ✅ models |
-| Combining data from different sources / small lists | — | ✅ `map`, `groupBy`, `keyBy` |
-| Already-loaded relation reused several times | — | ✅ filter the loaded collection |
+| Фільтрувати, сортувати, розбивати на сторінки багато рядків | ✅ `where`, `orderBy`, індекси, `LIMIT` | лише для рядків, які вже в пам’яті |
+| Кількість / сума / середнє / максимум | ✅ `count()`, `withCount`, `selectRaw('sum(...)')` | коли рядки й так завантажені |
+| Групування + агрегація (звіти) | ✅ `GROUP BY` повертає кілька рядків | ❌ спершу гідратує кожен рядок |
+| «Чи є хоч один?» | ✅ `exists()` | ❌ |
+| Кілька стовпців | ✅ `pluck()`, `select([...])` | ❌ `get()->pluck()` завантажує цілі моделі |
+| Бізнес-логіка на рівні моделі (події, приведення типів, аксесори) | ❌ | ✅ моделі |
+| Поєднання даних з різних джерел / невеликі списки | — | ✅ `map`, `groupBy`, `keyBy` |
+| Уже завантажений зв’язок, потрібний кілька разів | — | ✅ фільтруйте завантажену колекцію |
 
-Rule of thumb: send **questions** to the database (*how many, which ones, what total*), bring
-back **only the rows you'll render**, and use collections to shape what you already have.
+Просте правило: надсилайте базі **запитання** (*скільки, які, яка сума*), повертайте **лише ті
+рядки, які покажете**, а колекціями оформлюйте те, що вже маєте.
 
-### Base vs Eloquent Collection; hydration cost
+### Базова колекція проти Eloquent Collection; ціна гідратації
 
-`DB::table()->get()` and `Model::toBase()->get()` return an `Illuminate\Support\Collection` of
-`stdClass` rows with raw values: `format` is the string `'paperback'`, `price` an int of cents,
-`meta` a JSON string, `published_at` a string. `Book::get()` returns an
-`Illuminate\Database\Eloquent\Collection` of models: enum/Carbon/array casts, relation methods
-(none loaded until you ask), `modelKeys()`, `load*()`, `find()`, `toQuery()`, `fresh()`. Eloquent
-compares models **by key** (`diff`, `intersect`, `unique`, `contains`); a base collection
-compares **by value**, so a changed attribute or another instance of the same row counts as
-different. `toBase()` keeps the Eloquent query (soft-delete scope included) but skips hydration;
-`DB::table('books')` doesn't know about soft deletes.
+`DB::table()->get()` і `Model::toBase()->get()` повертають `Illuminate\Support\Collection` рядків
+`stdClass` із сирими значеннями: `format` — рядок `'paperback'`, `price` — ціле число копійок,
+`meta` — рядок JSON, `published_at` — рядок. `Book::get()` повертає `Illuminate\Database\Eloquent\Collection`
+моделей: приведення до enum/Carbon/масиву, методи зв’язків (жоден не завантажено, доки не
+попросите), `modelKeys()`, `load*()`, `find()`, `toQuery()`, `fresh()`. Eloquent порівнює моделі
+**за ключем** (`diff`, `intersect`, `unique`, `contains`); базова колекція порівнює **за
+значенням**, тож змінений атрибут чи інший екземпляр того самого рядка вважається іншим.
+`toBase()` зберігає запит Eloquent (разом зі скоупом м’якого видалення), але пропускає гідратацію;
+`DB::table('books')` про м’яке видалення нічого не знає.
 
-`map()` keeps an Eloquent Collection only while it returns models; returning strings/arrays
-gives a base collection (no more `load()`/`toQuery()`).
+`map()` зберігає Eloquent Collection, лише поки повертає моделі; якщо повертати рядки чи масиви,
+отримаєте базову колекцію (без `load()`/`toQuery()`).
 
-Hydration cost, all 50,000 books (single cold run):
+Ціна гідратації, усі 50 000 книг (один «холодний» запуск):
 
-| | Queries | DB ms | Wall ms | Peak memory |
+| | Запити | БД, мс | Загалом, мс | Пікова пам’ять |
 |---|---:|---:|---:|---:|
 | `DB::table('books')->get()` | 1 | 173 | 179 | 67 MB |
 | `Book::toBase()->get()` | 1 | 185 | 197 | 67 MB |
 | `Book::get()` | 1 | 159 | **1,747** | **125 MB** |
 
-The query costs the same; ~1.5 s and ~58 MB are spent building 50k models.
+Запит коштує однаково; ~1,5 с і ~58 MB іде на створення 50 тис. моделей.
 
-### Aggregates and pluck: SQL vs PHP (50k books)
+### Агрегати й pluck: SQL проти PHP (50 тис. книг)
 
-| Task | SQL | Collection |
+| Задача | SQL | Колекція |
 |---|---|---|
-| avg/sum/max price | 13 ms, 72 KB | 2,763 ms, 89 MB |
-| count by format | 52 ms, 43 KB | 1,949 ms, 90 MB |
-| title by id | `pluck()` 48 ms, 26 MB | `get()->pluck()` 2,683 ms, 124 MB |
+| avg/sum/max ціни | 13 ms, 72 KB | 2,763 ms, 89 MB |
+| кількість за форматом | 52 ms, 43 KB | 1,949 ms, 90 MB |
+| назва за id | `pluck()` 48 ms, 26 MB | `get()->pluck()` 2,683 ms, 124 MB |
 
-### Iterating large tables (sum the price of all ebooks, 50k books)
+### Обхід великих таблиць (сума цін усіх електронних книг, 50 тис. книг)
 
-| Approach | Queries | DB ms | Wall ms | Peak memory |
+| Підхід | Запити | БД, мс | Загалом, мс | Пікова пам’ять |
 |---|---:|---:|---:|---:|
 | `get()` | 1 | 163 | 2,621 | 124.8 MB |
 | `chunk(1000)` | 51 | 1,447 | 3,964 | 2.5 MB |
@@ -79,106 +78,109 @@ The query costs the same; ~1.5 s and ~58 MB are spent building 50k models.
 | `lazy(1000)` | 51 | 1,428 | 3,472 | 4.9 MB |
 | `lazyById(1000)` | 51 | 289 | 2,303 | 4.9 MB |
 | `cursor()` | 1 | 99 | 5,436 | 10.5 MB |
-| `cursor()->filter->map->take(10)` (first 10 only) | 1 | 71 | 77 | 10.5 MB |
+| `cursor()->filter->map->take(10)` (лише перші 10) | 1 | 71 | 77 | 10.5 MB |
 
-What the numbers say (as measured, not as expected):
+Що кажуть числа (як виміряно, а не як очікувалося):
 
-- All chunked approaches cut memory by ~25–50× vs `get()`; total time is similar because
-  hydration dominates.
-- `chunk`/`lazy` use `LIMIT/OFFSET`: the database re-reads all skipped rows for every page, so DB
-  time is ~5× that of `chunkById`/`lazyById` (`WHERE id > ? LIMIT 1000`), and it grows
-  quadratically with table size.
-- `cursor()` runs one query and hydrates one model at a time, but it was the **slowest** here and
-  used **more** memory than chunking: with MySQL's default *buffered* queries the driver receives
-  the whole result set into PHP memory before yielding the first row (10.5 MB for raw rows), so
-  only the hydration is spread out. Unbuffered queries (`PDO::MYSQL_ATTR_USE_BUFFERED_QUERY =>
-  false`) would avoid that, at the cost of blocking the connection while iterating.
-- `cursor()` **can't eager-load**: eager loading needs the set of parent keys of a page; cursor
-  never has a page, so every relation access is a lazy load (an N+1 — strict mode throws). Use
-  `lazyById()->…` with `with()` (it eager-loads per chunk) when you need relations.
-- A `LazyCollection` pipeline stops early (`take(10)`: 77 ms), but the query has already
-  transferred every row — put the filter in SQL when you can.
+- Усі порційні підходи зменшують пам’ять у ~25–50 разів порівняно з `get()`; загальний час
+  схожий, бо переважає гідратація.
+- `chunk`/`lazy` використовують `LIMIT/OFFSET`: для кожної сторінки база заново перечитує всі
+  пропущені рядки, тож час БД приблизно в 5 разів більший, ніж у `chunkById`/`lazyById`
+  (`WHERE id > ? LIMIT 1000`), і росте квадратично з розміром таблиці.
+- `cursor()` виконує один запит і гідратує по одній моделі, але тут він виявився **найповільнішим**
+  і зайняв **більше** пам’яті, ніж порційні підходи: із типовими *буферизованими* запитами MySQL
+  драйвер отримує весь результат у пам’ять PHP ще до першого рядка (10.5 MB сирих рядків), тож
+  розподіляється в часі лише гідратація. Небуферизовані запити (`PDO::MYSQL_ATTR_USE_BUFFERED_QUERY =>
+  false`) цього уникають, але блокують з’єднання на час обходу.
+- `cursor()` **не вміє жадібного завантаження**: для нього потрібен набір ключів батьківських
+  записів сторінки, а в курсора сторінок немає, тож кожне звернення до зв’язку — ліниве
+  завантаження (N+1 — суворий режим кине виняток). Коли потрібні зв’язки, беріть `lazyById()->…`
+  з `with()` (він жадібно завантажує зв’язки для кожної порції).
+- Конвеєр `LazyCollection` зупиняється раніше (`take(10)`: 77 ms), але запит уже передав усі
+  рядки — ставте фільтр у SQL, коли це можливо.
 
-### The chunk pitfall
+### Пастка chunk
 
-`chunk()` pages by `OFFSET`. If the callback changes the column you filter on, rows move out of
-the result set and the next page starts too far:
+`chunk()` розбиває на сторінки через `OFFSET`. Якщо колбек змінює стовпець, за яким фільтруєте,
+рядки випадають із вибірки, і наступна сторінка починається занадто далеко:
 
-| Approve 40,192 unapproved reviews (rolled back) | Chunks | Left unapproved | Queries | Wall ms |
+| Схвалити 40 192 несхвалені відгуки (з відкатом) | Порцій | Лишилося несхвалених | Запити | Загалом, мс |
 |---|---:|---:|---:|---:|
 | `where('is_approved', false)->chunk(100, …)` | 201 | **20,092** | 405 | 9,559 |
 | `where('is_approved', false)->chunkById(100, …)` | 402 | **0** | 806 | 3,569 |
 
-Half the rows are silently skipped. `chunkById()` (and `lazyById()`) page by `id > last id`,
-which is stable under updates and also faster.
+Половина рядків непомітно пропускається. `chunkById()` (і `lazyById()`) розбивають за
+`id > останній id`, що стабільно під час оновлень і до того ж швидше.
 
-### Mass update vs model save (200 books, rolled back)
+### Масове оновлення проти збереження моделей (200 книг, з відкатом)
 
-| | Queries | Wall ms | `updated_at` changed |
+| | Запити | Загалом, мс | `updated_at` змінено |
 |---|---:|---:|---:|
 | `$books->toQuery()->increment('price', 100)` | 3 | 56 | 200 |
 | `DB::table('books')->whereIn(...)->increment(...)` | 3 | 46 | 0 |
 | `$books->each(fn ($b) => $b->save())` | 202 | 241 | 200 |
 
-(3 = fetch + update + verification read.) The Eloquent Builder adds `updated_at` to every
-update; the Query Builder doesn't. Neither fires model events — only `save()` does, one UPDATE
-per model. Observers and events are part of stage 6.
+(3 = вибірка + оновлення + контрольне читання.) Eloquent Builder додає `updated_at` до кожного
+оновлення; Query Builder — ні. Жоден не запускає подій моделі — це робить лише `save()`, по одному
+UPDATE на модель. Спостерігачі (observers) і події — етап 6. (+100 копійок = +1 ₴.)
 
-### Subqueries
+### Підзапити
 
 `addSelect(['latest_review_at' => Review::select('created_at')->whereColumn('reviews.book_id',
-'books.id')->latest()->limit(1)])` adds a column in one query (4 ms, 73 KB for 20 books) vs eager
-loading `latestReview` (2 queries, 10 ms, 130 KB) — use it when you need a value, the relation
-when you need the model. `whereHas()` compiles to the same `EXISTS (select * …)` subquery as a
-hand-written `whereExists()` (both ~220 ms on 50k books); write `whereExists()` only when there is
-no relation to use.
+'books.id')->latest()->limit(1)])` додає стовпець в одному запиті (4 ms, 73 KB для 20 книг) проти
+жадібного завантаження `latestReview` (2 запити, 10 ms, 130 KB) — беріть підзапит, коли потрібне
+значення, і зв’язок, коли потрібна модель. `whereHas()` компілюється в той самий підзапит
+`EXISTS (select * …)`, що й написаний вручну `whereExists()` (обидва ~220 ms на 50 тис. книг);
+`whereExists()` пишіть лише тоді, коли немає зв’язку, яким можна скористатися.
 
-### Reports with the Query Builder
+### Звіти на Query Builder
 
-Reports aggregate many rows into a few, mix tables freely and don't need models, events or casts:
-the Query Builder is the right tool. The lab compares the stock report done both ways (first
-warehouse only — 25k stock rows — because the PHP way over all 125k rows took **13.1 s and
-319 MB**):
+Звіти агрегують багато рядків у кілька, вільно поєднують таблиці й не потребують моделей, подій
+чи приведення типів — для них Query Builder саме той інструмент. Лабораторія порівнює звіт про
+залишки, зроблений обома способами (лише перший склад — 25 тис. рядків залишків, — бо PHP-варіант
+на всіх 125 тис. рядках зайняв **13,1 с і 319 MB**):
 
-| Stock by warehouse × root genre (25k rows) | Queries | Wall ms | Peak memory |
+| Залишки за складом × кореневим жанром (25 тис. рядків) | Запити | Загалом, мс | Пікова пам’ять |
 |---|---:|---:|---:|
 | SQL (`StockByWarehouseGenreReport`) | 1 | 133 | 60 KB |
-| PHP (load models + `groupBy`/`sum`) | 4 | 3,858 | 92.9 MB |
+| PHP (моделі + `groupBy`/`sum`) | 4 | 3,858 | 92.9 MB |
 
-Both produce identical numbers (a test checks this on seeded data).
+Обидва дають однакові числа (тест перевіряє це на даних із сидерів).
 
-Performance work on the full dataset (MySQL 8.4):
+Оптимізація на повному наборі даних (MySQL 8.4):
 
-| Report | First version | Final | Change |
+| Звіт | Перша версія | Остаточна | Що змінено |
 |---|---:|---:|---|
-| Stock report | 1.0 s | 0.3 s | aggregate on ids in a subquery, join names to the ~55 result rows afterwards |
-| Top authors | 5.5 s | 0.6 s | pre-aggregate approved reviews per book (`joinSub`), then sum per author — instead of joining 200k reviews to every credit |
-| CSV, 125k rows | 25 s | 0.9 s | `useIndex('primary')`: MySQL misestimated `books.deleted_at is null`, drove each chunk from `books` and filesorted (190 ms → 2 ms per chunk) |
+| Звіт про залишки | 1.0 s | 0.3 s | агрегація за id у підзапиті, назви приєднуються вже до ~55 рядків результату |
+| Найкращі автори | 5.5 s | 0.6 s | попередня агрегація схвалених відгуків по книгах (`joinSub`), потім сума по авторах — замість з’єднання 200 тис. відгуків із кожною участю автора |
+| CSV, 125 тис. рядків | 25 s | 0.9 s | `useIndex('primary')`: MySQL хибно оцінив `books.deleted_at is null`, починав кожну порцію з `books` і сортував через filesort (190 ms → 2 ms на порцію) |
 
-Always `EXPLAIN` a report query on realistic data — the same SQL that is instant on 500 rows
-can choose a terrible plan on 50k.
+Завжди запускайте `EXPLAIN` для запиту звіту на реалістичних даних — той самий SQL, що миттєвий
+на 500 рядках, на 50 тис. може обрати жахливий план.
 
-### Raw expression safety
+### Безпека сирих виразів
 
-`selectRaw`, `whereRaw`, `havingRaw`, `orderByRaw`, `groupByRaw` and `DB::raw()` insert their
-string into SQL **as is**. Only fixed expressions go there (`coalesce(genres.parent_id,
-genres.id)`); every value goes through bindings: `havingRaw('sum(reviews_count) >= ?',
-[$this->minReviews])`, `where('stocks.warehouse_id', $id)`. Never interpolate input:
-`havingRaw("count(*) >= $min")` is an SQL injection. Column/alias names can't be bound —
-whitelist them (stage 8). The CSV export also prefixes cells starting with `= + - @` to stop
-spreadsheet formula injection.
+`selectRaw`, `whereRaw`, `havingRaw`, `orderByRaw`, `groupByRaw` і `DB::raw()` вставляють свій рядок
+у SQL **як є**. Туди потрапляють лише фіксовані вирази (`coalesce(genres.parent_id,
+genres.id)`); кожне значення проходить через прив’язки (bindings): `havingRaw('sum(reviews_count) >= ?',
+[$this->minReviews])`, `where('stocks.warehouse_id', $id)`. Ніколи не підставляйте введення:
+`havingRaw("count(*) >= $min")` — це SQL-ін’єкція. Імена стовпців чи псевдонімів прив’язати не
+можна — перевіряйте їх за білим списком (етап 8). Експорт CSV також додає префікс до клітинок, що
+починаються з `= + - @`, щоб запобігти ін’єкції формул у табличних редакторах. Заголовки CSV
+залишено англійськими ідентифікаторами (`warehouse`, `isbn`, …) — це машинозчитуваний формат.
 
-### Streaming CSV
+### Потоковий CSV
 
-`response()->streamDownload()` writes rows to `php://output` while `lazyById(1000)` reads them,
-so memory stays flat: 125,219 lines / 9.6 MB in 0.9 s.
+`response()->streamDownload()` пише рядки в `php://output`, поки `lazyById(1000)` їх читає, тож
+пам’ять лишається сталою: 125 219 рядків / 9,6 MB за 0,9 с.
 
-## Exercise
+## Вправа
 
-1. Add a `warehouse` filter to `/reports/stock` (bound parameter, validated later in stage 8)
-   and a link from each warehouse card to its CSV.
-2. Rewrite the large-volume test with `lazyById(1000)->each(...)` plus `with('genre')` and
-   compare queries with `cursor()` accessing `->genre` (strict mode will tell you why).
-3. Replace `chunk()` in the pitfall with `->each()` on `lazy()` — does it skip rows too? Why?
-4. `EXPLAIN` the top-authors query before and after the `joinSub` refactoring and write down
-   the access types.
+1. Додайте фільтр `warehouse` до `/reports/stock` (прив’язаний параметр; валідація — на етапі 8)
+   і посилання з картки кожного складу на його CSV.
+2. Перепишіть тест на великий обсяг із `lazyById(1000)->each(...)` плюс `with('genre')` і
+   порівняйте кількість запитів із `cursor()`, що звертається до `->genre` (суворий режим
+   підкаже, чому так).
+3. Замініть `chunk()` у пастці на `->each()` на `lazy()` — чи пропускає він рядки теж? Чому?
+4. Виконайте `EXPLAIN` для запиту найкращих авторів до і після рефакторингу з `joinSub` і
+   запишіть типи доступу.

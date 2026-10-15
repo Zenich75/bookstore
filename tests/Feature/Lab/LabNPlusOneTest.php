@@ -15,14 +15,17 @@ test('lab index renders all variants', function () {
         $response->assertSee($variant->title);
     }
 
-    $response->assertSee('worst')->assertSee('best');
+    $response->assertSee(__('lab.n_plus_one.worst'))->assertSee(__('lab.n_plus_one.best'));
 });
 
-test('each variant detail page renders', function (string $key) {
-    $this->get(route('lab.n-plus-one', ['variant' => $key]))
-        ->assertOk()
-        ->assertSee('Queries grouped by normalized SQL');
-})->with(fn () => array_keys((new NPlusOneLab)->variants()));
+test('each variant detail page renders', function () {
+    // Looped instead of a dataset: building the lab needs the booted app (translations).
+    foreach (array_keys((new NPlusOneLab)->variants()) as $key) {
+        $this->get(route('lab.n-plus-one', ['variant' => $key]))
+            ->assertOk()
+            ->assertSee(__('lab.n_plus_one.rendered'));
+    }
+});
 
 test('unknown variant is a 404', function () {
     $this->get(route('lab.n-plus-one', ['variant' => 'nope']))->assertNotFound();
@@ -61,5 +64,5 @@ test('fixed variants produce no duplicate queries', function (string $key) {
 test('broken select (k3) leaves genre silently null', function () {
     $lab = new NPlusOneLab;
 
-    expect($lab->profile($lab->variant('select-missing-fk'))->result)->toContain('— no genre —');
+    expect($lab->profile($lab->variant('select-missing-fk'))->result)->toContain(__('lab.n_plus_one.card.no_genre'));
 });

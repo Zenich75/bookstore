@@ -1,20 +1,20 @@
-# NN — Topic title
+# NN — Назва теми
 
-## Goal
+## Мета
 
-What the learner should understand or be able to do after this lesson (1–3 sentences).
+Що учень має зрозуміти або вміти після цього уроку (1–3 речення).
 
-## Where to look in code
+## Де дивитися в коді
 
-- `app/...` — what to look at and why
+- `app/...` — на що звернути увагу і чому
 - `database/migrations/...` —
 - `tests/Feature/...` —
 
-## Key concepts
+## Ключові поняття
 
-- **Concept** — short explanation, link to the Laravel docs.
+- **Поняття** — коротке пояснення, посилання на документацію Laravel.
 
-## Exercise
+## Вправа
 
-1. A small, self-contained task that extends this lesson's code.
-2. How to verify it (test to write / command to run / page to open).
+1. Невелике самостійне завдання, що розширює код цього уроку.
+2. Як перевірити результат (який тест написати / яку команду запустити / яку сторінку відкрити).

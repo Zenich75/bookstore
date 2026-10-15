@@ -1,70 +1,71 @@
-# 01 — Database schema, models, factories & seeders
+# 01 — Схема БД, моделі, фабрики та сидери
 
-## Goal
+## Мета
 
-Design the warehouse database (14 tables, including pivots and polymorphic tables), map it to
-Eloquent models with Laravel 13 PHP attributes, and generate realistic demo data at two scales:
-a fast `small` seed for everyday work and a `full` seed (~50k books, ~200k reviews) for the
-performance lessons. Relationships, accessors, scopes etc. come in later stages.
+Спроєктувати базу даних складу (14 таблиць, включно з проміжними та поліморфними), відобразити її
+на моделі Eloquent із PHP-атрибутами Laravel 13 і згенерувати реалістичні демонстраційні дані у
+двох масштабах: швидкий `small` для щоденної роботи та `full` (~50 тис. книг, ~200 тис. відгуків)
+для уроків про продуктивність. Зв’язки, аксесори, скоупи тощо з’являться на наступних етапах.
 
-## Where to look in code
+## Де дивитися в коді
 
-- `app/Enums/*` — string-backed enums stored in plain `string` columns.
-- `database/migrations/2026_10_15_*` — schema, in foreign-key order.
-- `app/Models/*` — `#[Fillable]` / `#[Hidden]` attributes, `casts()`; `Book` keeps the legacy
-  `protected $fillable` commented for comparison; `StockMovement` has `UPDATED_AT = null`.
-- `database/factories/*` — states (`manager()`, `admin()`, `published()`, `unpublished()`,
-  `format()`, `approved()`, `child()`); `Concerns/GeneratesUniqueValues.php` for ISBN/slugs.
-- `database/seeders/*` — `DatabaseSeeder` order, `Support/SeedScale.php`, `Support/BulkInserts.php`.
-- `tests/Feature/Database/*` — migrations, factories, seeder and unique-constraint tests.
+- `app/Enums/*` — enum зі строковими значеннями, що зберігаються у звичайних стовпцях `string`;
+  метод `label()` повертає перекладену назву.
+- `database/migrations/2026_10_15_*` — схема в порядку зовнішніх ключів.
+- `app/Models/*` — атрибути `#[Fillable]` / `#[Hidden]`, `casts()`; у `Book` для порівняння
+  збережено закоментований старий варіант `protected $fillable`; у `StockMovement` — `UPDATED_AT = null`.
+- `database/factories/*` — стани (`manager()`, `admin()`, `published()`, `unpublished()`,
+  `format()`, `approved()`, `child()`); `Concerns/GeneratesUniqueValues.php` — ISBN і слаги.
+- `database/seeders/*` — порядок у `DatabaseSeeder`, `Support/SeedScale.php`, `Support/BulkInserts.php`.
+- `tests/Feature/Database/*` — тести міграцій, фабрик, сидера та унікальних обмежень.
 
-## Key concepts
+## Ключові поняття
 
-### ER diagram
+### ER-діаграма
 
 ```mermaid
 erDiagram
-    warehouses ||--o{ users : "employs (managers)"
-    users ||--o| profiles : has
-    users ||--o{ reviews : writes
-    users |o--o{ stock_movements : "performed by"
-    genres |o--o{ genres : "parent of"
-    genres ||--o{ books : "primary genre"
-    books ||--o{ reviews : receives
+    warehouses ||--o{ users : "працевлаштовує (менеджерів)"
+    users ||--o| profiles : "має"
+    users ||--o{ reviews : "пише"
+    users |o--o{ stock_movements : "виконав"
+    genres |o--o{ genres : "батьківський для"
+    genres ||--o{ books : "основний жанр"
+    books ||--o{ reviews : "отримує"
     books ||--o{ author_book : ""
     authors ||--o{ author_book : ""
     books ||--o{ book_genre : ""
-    genres ||--o{ book_genre : "secondary genres"
-    warehouses ||--o{ stocks : holds
-    books ||--o{ stocks : "stocked as"
+    genres ||--o{ book_genre : "додаткові жанри"
+    warehouses ||--o{ stocks : "зберігає"
+    books ||--o{ stocks : "залишки"
     warehouses ||--o{ stock_movements : ""
     books ||--o{ stock_movements : ""
     tags ||--o{ taggables : ""
-    books ||--o{ images : "imageable (morph)"
-    authors ||--o{ images : "imageable (morph)"
-    books ||--o{ taggables : "taggable (morph)"
-    authors ||--o{ taggables : "taggable (morph)"
+    books ||--o{ images : "imageable (морф)"
+    authors ||--o{ images : "imageable (морф)"
+    books ||--o{ taggables : "taggable (морф)"
+    authors ||--o{ taggables : "taggable (морф)"
 
     users {
         bigint id PK
         string role
-        bigint warehouse_id FK "nullable"
+        bigint warehouse_id FK "може бути NULL"
     }
     profiles {
         bigint id PK
         bigint user_id FK,UK
-        text phone "encrypted later"
+        text phone "згодом шифрується"
     }
     books {
         bigint id PK
         char13 isbn UK
         string slug UK
-        uint price "cents"
+        uint price "копійки"
         string format
         bigint genre_id FK
-        timestamp published_at "indexed"
+        timestamp published_at "з індексом"
         json meta
-        decimal rating_avg "denormalized"
+        decimal rating_avg "денормалізовано"
         timestamp deleted_at
     }
     reviews {
@@ -111,61 +112,66 @@ erDiagram
     }
 ```
 
-### Money as integer cents
+### Гроші — цілі числа в копійках
 
-`books.price` is `unsigned int` holding cents (`1999` = $19.99). Floats can't represent most
-decimal fractions exactly (`0.1 + 0.2 != 0.3`), so sums and discounts drift. `DECIMAL` is exact
-but is returned as a string by PDO and still tempts float math in PHP. Integers are exact, fast
-and trivially summed; formatting happens only when displaying (a cast/accessor in a later stage).
+`books.price` — це `unsigned int` у копійках (`1999` = 19,99 ₴). Числа з рухомою комою не можуть
+точно представити більшість десяткових дробів (`0.1 + 0.2 != 0.3`), тож суми й знижки «пливуть».
+`DECIMAL` точний, але PDO повертає його рядком, і в PHP все одно спокушає рахувати у float. Цілі
+числа точні, швидкі й легко сумуються; форматування — лише під час показу:
+`Number::currency($price / 100, in: 'UAH', locale: 'uk')` → «19,99 ₴» (на наступному етапі —
+через приведення типів або аксесор).
 
-### Enums in string columns
+### Enum у строкових стовпцях
 
-`role`, `format`, `type`, `reason` are `string` columns + PHP backed enums (cast in `casts()`),
-not native DB `ENUM`s: adding a case is a code change, not an `ALTER TABLE`, and it works the
-same on MySQL and SQLite.
+`role`, `format`, `type`, `reason` — це стовпці `string` + PHP backed enum (приведення в
+`casts()`), а не нативні `ENUM` бази даних: новий варіант — це зміна коду, а не `ALTER TABLE`, і
+все однаково працює в MySQL і SQLite. Людські назви варіантів дає `->label()` з
+`lang/{uk,en}/enums.php`.
 
-### Foreign keys: what happens on delete
+### Зовнішні ключі: що відбувається під час видалення
 
-| FK | Rule | Why |
+| Зовнішній ключ | Правило | Чому |
 |---|---|---|
-| `profiles.user_id`, `reviews.user_id` | cascade | owned by the user; meaningless without it |
-| `reviews.book_id`, `stocks.*`, pivots (`author_book`, `book_genre`, `taggables.tag_id`) | cascade | rows only describe the link |
-| `stock_movements.warehouse_id/book_id` | cascade | ledger of a stock that no longer exists |
-| `stock_movements.user_id` | nullOnDelete | keep the history, forget who did it |
-| `users.warehouse_id` | nullOnDelete | a manager survives warehouse closure |
-| `genres.parent_id` | nullOnDelete | children become root genres |
-| `books.genre_id` | restrictOnDelete | can't delete a genre that still has books |
+| `profiles.user_id`, `reviews.user_id` | cascade | належать користувачеві; без нього не мають сенсу |
+| `reviews.book_id`, `stocks.*`, проміжні таблиці (`author_book`, `book_genre`, `taggables.tag_id`) | cascade | рядки лише описують зв’язок |
+| `stock_movements.warehouse_id/book_id` | cascade | журнал залишку, якого вже немає |
+| `stock_movements.user_id` | nullOnDelete | історію зберігаємо, автора руху забуваємо |
+| `users.warehouse_id` | nullOnDelete | менеджер складу «переживає» закриття складу |
+| `genres.parent_id` | nullOnDelete | піджанри стають кореневими жанрами |
+| `books.genre_id` | restrictOnDelete | не можна видалити жанр, у якому ще є книги |
 
-Note: `books` uses **soft deletes**, so a normal `$book->delete()` only sets `deleted_at` and
-cascades never fire; they apply on `forceDelete()`.
+Зауважте: `books` використовує **м’яке видалення (soft delete)**, тож звичайний `$book->delete()`
+лише заповнює `deleted_at`, і каскади не спрацьовують; вони діють під час `forceDelete()`.
 
-### Indexes
+### Індекси
 
-- `books.published_at` — catalog lists filter/sort by publication date.
-- `reviews (book_id, is_approved)` — "approved reviews of a book" (book page, rating job). The
-  composite also serves queries on `book_id` alone (left-most prefix).
-- `stock_movements (warehouse_id, book_id)` — history of one stock row.
-- `morphs()` adds `(type, id)` indexes on `images` / `taggables`.
-- Every `foreignId()->constrained()` gets an index on MySQL automatically.
+- `books.published_at` — списки каталогу фільтрують і сортують за датою виходу.
+- `reviews (book_id, is_approved)` — «схвалені відгуки книги» (сторінка книги, задача
+  перерахунку рейтингу). Складений індекс обслуговує й запити лише за `book_id` (лівий префікс).
+- `stock_movements (warehouse_id, book_id)` — історія одного залишку.
+- `morphs()` додає індекси `(type, id)` до `images` / `taggables`.
+- Кожен `foreignId()->constrained()` у MySQL автоматично отримує індекс.
 
-### Unique constraints = business rules in the DB
+### Унікальні обмеження = бізнес-правила в базі
 
-- `reviews (user_id, book_id)` — one review per user per book.
-- `stocks (warehouse_id, book_id)` — one stock row per book per warehouse.
-- `author_book (author_id, book_id, role)` — the same person can be author *and* translator.
-- `taggables (tag_id, taggable_id, taggable_type)`, `book_genre` composite primary key.
-- `books.isbn`, `*.slug`, `profiles.user_id` (makes profile one-to-one).
+- `reviews (user_id, book_id)` — один відгук від користувача на книгу.
+- `stocks (warehouse_id, book_id)` — один рядок залишку книги на складі.
+- `author_book (author_id, book_id, role)` — та сама людина може бути автором *і* перекладачем.
+- `taggables (tag_id, taggable_id, taggable_type)`, складений первинний ключ `book_genre`.
+- `books.isbn`, `*.slug`, `profiles.user_id` (робить профіль зв’язком «один до одного»).
 
-Validation can be bypassed (bulk inserts, race conditions); a unique index cannot.
+Валідацію можна обійти (масові вставки, гонки); унікальний індекс — ні.
 
-### Polymorphic (morph) columns
+### Поліморфні (морф-) стовпці
 
-`$table->morphs('imageable')` creates `imageable_type` (string, the model class, e.g.
-`App\Models\Book`) and `imageable_id` plus an index. One `images` table serves books (covers)
-and authors (photos); `taggables` does the same for many-to-many. The DB can't enforce a FK on
-`imageable_id` (it may point to different tables) — integrity is the application's job.
+`$table->morphs('imageable')` створює `imageable_type` (рядок: за замовчуванням клас моделі,
+наприклад `App\Models\Book`; у цьому проєкті — псевдонім `book` з мапи морфів, див. урок 02) і
+`imageable_id` плюс індекс. Одна таблиця `images` обслуговує книги (обкладинки) й авторів (фото);
+`taggables` робить те саме для зв’язку «багато до багатьох». База даних не може забезпечити
+зовнішній ключ для `imageable_id` (він може вказувати на різні таблиці) — цілісність лежить на
+застосунку.
 
-### Laravel 13 model attributes
+### Атрибути моделей у Laravel 13
 
 ```php
 #[Fillable(['title', 'slug', /* ... */])]
@@ -176,22 +182,28 @@ class Book extends Model
 }
 ```
 
-### Seeding at scale
+### Сидери великого обсягу
 
-- `SEED_SCALE=small|full` (`config('database.seed_scale')`). Inside Sail pass it to the
-  container: `docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --seed`
-  (or set it in `.env`).
-- Big tables are filled with **chunked Query Builder inserts** (1000 rows per statement) inside
-  transactions, using `Factory::raw()` to reuse factory definitions without creating models.
-  Explicit FKs are passed to `raw()` so it doesn't create related models via `Model::factory()`.
-- ISBNs and slugs come from a per-process counter (`GeneratesUniqueValues`) instead of
-  `faker->unique()`, which gets slow and throws on collisions at 50k rows.
-- Full seed: ~85 s on Sail/MySQL (see the table in the stage 1 summary).
+- `SEED_SCALE=small|full` (`config('database.seed_scale')`). У Sail передайте змінну в контейнер:
+  `docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --seed`
+  (або задайте її в `.env`).
+- Великі таблиці заповнюються **порційними вставками через Query Builder** (1000 рядків на
+  запит) у транзакціях; `Factory::raw()` дає змогу перевикористати визначення фабрик, не створюючи
+  моделей. Зовнішні ключі передаються в `raw()` явно, щоб він не створював пов’язані моделі через
+  `Model::factory()`.
+- ISBN і слаги беруться з лічильника в межах процесу (`GeneratesUniqueValues`), а не з
+  `faker->unique()`, який на 50 тис. рядків сповільнюється і кидає винятки через колізії.
+- Дані українською: Faker `uk_UA` (імена, міста, адреси), назви книг — `realText()` з
+  українського корпусу Faker, тексти відгуків — з пулу заздалегідь згенерованих текстів (бо
+  `realText()` коштує ~0,5 мс, а відгуків 200 тис.). Слаги — лише ASCII:
+  `Str::slug($value, '-', 'uk')`.
+- Повний сидинг: ~85 с на Sail/MySQL (див. таблицю в підсумку етапу 1; з українськими назвами
+  книг — трохи довше).
 
-## Exercise
+## Вправа
 
-1. Add a `publishers` table (name, country) and make `books.publisher_id` a nullable FK. Choose
-   the on-delete rule and justify it in a comment.
-2. Try inserting a duplicate review in tinker and observe `UniqueConstraintViolationException`.
-3. Time `Review::factory()->count(5000)->create()` vs. the bulk approach in `ReviewSeeder` for
-   the same number of rows. Write down both numbers — we'll revisit them in stage 5.
+1. Додайте таблицю `publishers` (назва, країна) і зробіть `books.publisher_id` зовнішнім ключем,
+   що може бути NULL. Оберіть правило під час видалення й обґрунтуйте його в коментарі.
+2. Спробуйте вставити дублікат відгуку в tinker і подивіться на `UniqueConstraintViolationException`.
+3. Заміряйте `Review::factory()->count(5000)->create()` проти масового підходу в `ReviewSeeder` для
+   тієї самої кількості рядків. Запишіть обидва числа — повернемося до них на етапі 5.

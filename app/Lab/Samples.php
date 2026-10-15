@@ -52,6 +52,6 @@ final class Samples
      */
     public function id(string $key): int
     {
-        return $this->ids[$key] ?? throw new MissingSample("No sample record for \"{$key}\" — run the seeders.");
+        return $this->ids[$key] ?? throw new MissingSample(__('lab.relations.missing_sample', ['key' => $key]));
     }
 }

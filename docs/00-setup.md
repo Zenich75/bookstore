@@ -1,73 +1,80 @@
-# 00 — Project setup
+# 00 — Налаштування проєкту
 
-## Goal
+## Мета
 
-Have a reproducible local environment (Docker via Sail) with debugging tools, strict Eloquent
-behavior and a database-backed queue, so later lessons can focus on Laravel features only.
+Мати відтворюване локальне середовище (Docker через Sail) з інструментами налагодження, суворою
+поведінкою Eloquent і чергою в базі даних, щоб наступні уроки зосереджувалися лише на
+можливостях Laravel.
 
-## Where to look in code
+## Де дивитися в коді
 
-- `compose.yaml` — Sail services: `laravel.test` (PHP 8.5 app), `mysql` (8.4), `mailpit`.
-- `.env.example` — Sail-ready defaults (DB, mail, queue, ports, `MODEL_STRICT`).
-- `config/app.php` — `model_strict` config key.
+- `compose.yaml` — сервіси Sail: `laravel.test` (застосунок на PHP 8.5), `mysql` (8.4), `mailpit`.
+- `.env.example` — налаштування для Sail (БД, пошта, черга, порти, `MODEL_STRICT`, локаль).
+- `config/app.php` — ключ конфігурації `model_strict`.
 - `app/Providers/AppServiceProvider.php` — `Model::shouldBeStrict()`.
-- `database/migrations/0001_01_01_*` — default `users`, `sessions`, `cache`, `jobs`,
-  `job_batches`, `failed_jobs` tables.
-- `tests/Pest.php`, `tests/Feature/StrictModeTest.php` — Pest setup and a strict-mode check.
+- `database/migrations/0001_01_01_*` — стандартні таблиці `users`, `sessions`, `cache`, `jobs`,
+  `job_batches`, `failed_jobs`.
+- `tests/Pest.php`, `tests/Feature/StrictModeTest.php` — налаштування Pest і перевірка суворого режиму.
 
-## Key concepts
+## Ключові поняття
 
 ### Laravel Sail
 
-A thin CLI over Docker Compose. Everyone gets identical PHP, MySQL and Mailpit versions without
-installing them on the host. Installed with `php artisan sail:install --with=mysql,mailpit`.
+Тонка обгортка над Docker Compose. Усі отримують однакові версії PHP, MySQL і Mailpit, нічого не
+встановлюючи на хост. Встановлено командою `php artisan sail:install --with=mysql,mailpit`.
 
-- App: <http://localhost> (`APP_PORT`)
-- Mailpit UI: <http://localhost:8025> — every mail sent with `MAIL_MAILER=smtp` lands here.
-- MySQL from the host: `127.0.0.1:3307` (`FORWARD_DB_PORT`; 3307 to avoid clashing with other
-  local MySQL instances). Inside containers the app connects to `mysql:3306`.
+- Застосунок: <http://localhost> (`APP_PORT`)
+- Інтерфейс Mailpit: <http://localhost:8025> — сюди потрапляє кожен лист, надісланий із `MAIL_MAILER=smtp`.
+- MySQL з хоста: `127.0.0.1:3307` (`FORWARD_DB_PORT`; 3307, щоб не конфліктувати з іншими
+  локальними MySQL). Усередині контейнерів застосунок підключається до `mysql:3306`.
 
 ### Debugbar (`barryvdh/laravel-debugbar`)
 
-Shows queries, timeline, views, mails, etc. at the bottom of each HTML page. It is a
-`require-dev` dependency (absent in `composer install --no-dev` builds) and is enabled only when
-`APP_DEBUG=true` (its `DEBUGBAR_ENABLED` defaults to `APP_DEBUG`). It will be the main tool to
-*see* N+1 queries in later lessons.
+Показує внизу кожної HTML-сторінки запити, часову шкалу, представлення, листи тощо. Це залежність
+`require-dev` (її немає у збірках `composer install --no-dev`), і вона вмикається лише за
+`APP_DEBUG=true` (`DEBUGBAR_ENABLED` за замовчуванням дорівнює `APP_DEBUG`). У наступних уроках
+це головний інструмент, щоб *побачити* N+1 запити.
 
-### Eloquent strict mode
+### Суворий режим Eloquent (strict mode)
 
-`Model::shouldBeStrict(true)` turns on three protections:
+`Model::shouldBeStrict(true)` вмикає три запобіжники:
 
-| Protection | What throws |
+| Запобіжник | Коли кидає виняток |
 |---|---|
-| `preventLazyLoading` | accessing a relation that wasn't eager loaded (N+1) |
-| `preventSilentlyDiscardingAttributes` | mass-assigning an attribute not in `$fillable` / `#[Fillable]` |
-| `preventAccessingMissingAttributes` | reading an attribute that wasn't selected / doesn't exist |
+| `preventLazyLoading` | звернення до зв’язку, який не завантажили жадібно (N+1) |
+| `preventSilentlyDiscardingAttributes` | масове присвоєння атрибута, якого немає в `$fillable` / `#[Fillable]` |
+| `preventAccessingMissingAttributes` | читання атрибута, який не вибрали або якого не існує |
 
-It is controlled by the `MODEL_STRICT` env flag (default `true`), read through
-`config('app.model_strict')` so it keeps working with `config:cache`. Later lessons set
-`MODEL_STRICT=false` to demonstrate the N+1 problem, then fix it with eager loading.
+Ним керує прапорець середовища `MODEL_STRICT` (за замовчуванням `true`), який читається через
+`config('app.model_strict')`, тож працює і з `config:cache`. У наступних уроках ставимо
+`MODEL_STRICT=false`, щоб показати проблему N+1, а потім виправляємо її жадібним завантаженням.
 
 ```bash
 ./vendor/bin/sail artisan tinker --execute="dump(config('app.model_strict'), Illuminate\Database\Eloquent\Model::preventsLazyLoading());"
 ```
 
-### Database queue
+### Черга в базі даних
 
-`QUEUE_CONNECTION=database` stores jobs in the `jobs` table and failures in `failed_jobs` — no
-Redis needed, and you can inspect queued jobs with plain SQL. Run a worker with
-`./vendor/bin/sail artisan queue:work`. Cache and sessions also use the database.
+`QUEUE_CONNECTION=database` зберігає задачі в таблиці `jobs`, а збої — у `failed_jobs`: Redis не
+потрібен, а поставлені в чергу задачі можна переглянути звичайним SQL. Обробник запускається
+командою `./vendor/bin/sail artisan queue:work`. Кеш і сесії теж зберігаються в базі.
 
-### Pest & Pint
+### Pest і Pint
 
-- Pest replaces the default PHPUnit-style tests (`./vendor/bin/sail artisan test`).
-- Pint formats code to the Laravel style (`./vendor/bin/sail pint`); run before committing.
+- Pest замінює стандартні тести в стилі PHPUnit (`./vendor/bin/sail artisan test`).
+- Pint форматує код за стилем Laravel (`./vendor/bin/sail pint`); запускайте перед комітом.
 
-## Exercise
+### Локалізація
 
-1. Set `MODEL_STRICT=false` in `.env`, then check in tinker that
-   `Model::preventsLazyLoading()` returns `false`. Restore it.
-2. Send a test mail from tinker:
-   `Mail::raw('Hello', fn ($m) => $m->to('test@example.com'));` and find it in Mailpit.
-3. Dispatch a closure job (`dispatch(fn () => logger('queued'));`), look at the `jobs` table,
-   then run `queue:work` and check `storage/logs/laravel.log`.
+Інтерфейс українською: `APP_LOCALE=uk`, резервна мова `en`, Faker — `uk_UA`. Тексти — у
+`lang/{uk,en}`, терміни — у [глосарії](glossary.md). Детальніше — у розділі «Мова інтерфейсу» в
+`README.md`.
+
+## Вправа
+
+1. Встановіть `MODEL_STRICT=false` у `.env` і перевірте в tinker, що
+   `Model::preventsLazyLoading()` повертає `false`. Поверніть як було.
+2. Надішліть тестовий лист із tinker:
+   `Mail::raw('Hello', fn ($m) => $m->to('test@example.com'));` і знайдіть його в Mailpit.
+3. Поставте в чергу задачу-замикання (`dispatch(fn () => logger('queued'));`), подивіться на таблицю
+   `jobs`, потім запустіть `queue:work` і перевірте `storage/logs/laravel.log`.

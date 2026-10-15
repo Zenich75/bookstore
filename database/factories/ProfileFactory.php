@@ -20,7 +20,7 @@ class ProfileFactory extends Factory
             'user_id' => User::factory(),
             'avatar_path' => fake()->boolean(40) ? 'avatars/'.fake()->uuid().'.jpg' : null,
             'phone' => fake()->optional(0.6)->e164PhoneNumber(),
-            'bio' => fake()->optional(0.5)->sentences(2, true),
+            'bio' => fake()->boolean(50) ? fake()->realTextBetween(60, 160) : null,
         ];
     }
 }

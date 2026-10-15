@@ -26,11 +26,12 @@ trait GeneratesUniqueValues
     }
 
     /**
-     * "Some Title" => "some-title-2bx9k" (base36 counter suffix).
+     * "Тіні забутих предків" => "tini-zabutykh-predkiv-2bx9k" (Ukrainian transliteration,
+     * ASCII only, base36 counter suffix).
      */
     protected static function uniqueSlug(string $value): string
     {
-        return Str::slug($value).'-'.base_convert((string) static::nextUniqueNumber(), 10, 36);
+        return Str::slug($value, '-', 'uk').'-'.base_convert((string) static::nextUniqueNumber(), 10, 36);
     }
 
     /**

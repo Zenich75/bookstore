@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Number;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -57,6 +58,10 @@ class AppServiceProvider extends ServiceProvider
             'book' => Book::class,
             'author' => Author::class,
         ]);
+
+        // Number::format()/fileSize() follow the app locale (uk: "1 234,5"). Carbon picks
+        // up the locale from the translator automatically.
+        Number::useLocale(app()->getLocale());
 
         // View composer: runs whenever the catalog sidebar partial is rendered.
         View::composer('books.partials.sidebar', GenreTreeComposer::class);

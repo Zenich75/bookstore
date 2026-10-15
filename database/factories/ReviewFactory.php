@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class ReviewFactory extends Factory
 {
     /**
+     * Pool of Ukrainian review texts. Faker's realText() costs ~0.5 ms, which
+     * would add minutes to the 200k-review seed, so bodies are drawn from a pool.
+     *
+     * @var list<string>|null
+     */
+    protected static ?array $bodies = null;
+
+    /**
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -22,7 +30,10 @@ class ReviewFactory extends Factory
             'book_id' => Book::factory(),
             // Skewed towards positive ratings, like real stores.
             'rating' => fake()->randomElement([1, 2, 3, 3, 4, 4, 4, 5, 5, 5]),
-            'body' => fake()->paragraph(),
+            'body' => fake()->randomElement(static::$bodies ??= array_map(
+                fn () => fake()->realTextBetween(80, 300),
+                range(1, 300),
+            )),
             'is_approved' => false,
         ];
     }

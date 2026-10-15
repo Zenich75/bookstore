@@ -1,18 +1,18 @@
 <x-layouts.app :title="$warehouse->name">
     <p class="-mt-4 mb-6 text-sm text-stone-500">
-        {{ $warehouse->address }}, {{ $warehouse->city }} · Manager: {{ $warehouse->manager?->name ?? '—' }}
+        {{ $warehouse->address }}, {{ $warehouse->city }} · {{ __('ui.warehouses.manager', ['name' => $warehouse->manager?->name ?? '—']) }}
     </p>
 
     <x-card>
         <table class="w-full text-sm">
             <thead class="text-left text-stone-500">
                 <tr>
-                    <th class="py-2">#</th>
-                    <th class="py-2">Book</th>
-                    <th class="py-2">Shelf</th>
-                    <th class="py-2 text-right">Quantity</th>
-                    <th class="py-2 text-right">Reserved</th>
-                    <th class="py-2 text-right">Status</th>
+                    <th class="py-2">{{ __('ui.warehouses.columns.number') }}</th>
+                    <th class="py-2">{{ __('ui.warehouses.columns.book') }}</th>
+                    <th class="py-2">{{ __('ui.warehouses.columns.shelf') }}</th>
+                    <th class="py-2 text-right">{{ __('ui.warehouses.columns.quantity') }}</th>
+                    <th class="py-2 text-right">{{ __('ui.warehouses.columns.reserved') }}</th>
+                    <th class="py-2 text-right">{{ __('ui.warehouses.columns.status') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,7 +27,7 @@
                         <td class="py-1.5 text-right"><x-stock-badge :quantity="$stock->quantity" :reserved="$stock->reserved" /></td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="py-4 text-center text-stone-500">This warehouse is empty.</td></tr>
+                    <tr><td colspan="6" class="py-4 text-center text-stone-500">{{ __('ui.warehouses.empty_stock') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

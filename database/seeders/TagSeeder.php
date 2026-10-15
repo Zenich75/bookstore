@@ -15,11 +15,11 @@ class TagSeeder extends Seeder
     use BulkInserts;
 
     private const TAGS = [
-        'Bestseller', 'New Release', 'Award Winner', 'Classic', 'Staff Pick', 'Debut',
-        'Book Club', 'Series', 'Standalone', 'Illustrated', 'Signed Edition', 'Limited Edition',
-        'Translated', 'Based on True Story', 'Adapted to Film', 'Short Read', 'Epic', 'Cozy',
-        'Dark', 'Funny', 'Inspirational', 'Educational', 'Family', 'Adventure', 'Philosophy',
-        'Nobel Laureate', 'Pulitzer Prize', 'Booker Prize', 'Indie Author', 'Local Author',
+        'Бестселер', 'Новинка', 'Лауреат премії', 'Класика', 'Вибір продавця', 'Дебют',
+        'Для книжкового клубу', 'Серія', 'Окрема книга', 'Ілюстроване видання', 'З автографом', 'Обмежений наклад',
+        'Переклад', 'На реальних подіях', 'Екранізовано', 'Коротке читання', 'Епопея', 'Затишне',
+        'Похмуре', 'Смішне', 'Надихає', 'Пізнавальне', 'Для всієї родини', 'Пригоди', 'Філософія',
+        'Нобелівський лауреат', 'Пулітцерівська премія', 'Букерівська премія', 'Незалежний автор', 'Український автор',
     ];
 
     public function run(): void
@@ -28,7 +28,7 @@ class TagSeeder extends Seeder
 
         DB::transaction(function () {
             foreach (self::TAGS as $name) {
-                Tag::create(['name' => $name, 'slug' => Str::slug($name)]);
+                Tag::create(['name' => $name, 'slug' => Str::slug($name, '-', 'uk')]);
             }
 
             $tagIds = DB::table('tags')->pluck('id')->all();

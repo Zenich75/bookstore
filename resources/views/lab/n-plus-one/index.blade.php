@@ -1,9 +1,5 @@
-<x-layouts.app title="Lab: N+1 queries">
-    <p class="-mt-2 mb-6 max-w-3xl text-sm text-stone-600">
-        Each variant renders the same card for the same {{ $sampleSize }} books, so the only difference is
-        how data is loaded. Metrics are from the second of two runs (warm-up). Debugbar is disabled on this
-        page so it doesn't skew time and memory.
-    </p>
+<x-layouts.app :title="__('lab.n_plus_one.title')">
+    <p class="-mt-2 mb-6 max-w-3xl text-sm text-stone-600">{{ __('lab.n_plus_one.intro', ['count' => $sampleSize]) }}</p>
 
     @php
         $ok = $rows->filter(fn ($row) => $row['variant']->ranked && $row['profile']->error === null);
@@ -20,11 +16,11 @@
             <table class="w-full text-sm">
                 <thead class="text-left text-xs uppercase text-stone-400">
                     <tr>
-                        <th class="py-2 pr-3">Variant</th>
-                        <th class="w-1/6 py-2 pr-3">Queries</th>
-                        <th class="w-1/6 py-2 pr-3">DB ms</th>
-                        <th class="w-1/6 py-2 pr-3">Wall ms</th>
-                        <th class="w-1/6 py-2">Memory</th>
+                        <th class="py-2 pr-3">{{ __('lab.common.metrics.variant') }}</th>
+                        <th class="w-1/6 py-2 pr-3">{{ __('lab.common.metrics.queries') }}</th>
+                        <th class="w-1/6 py-2 pr-3">{{ __('lab.common.metrics.db_ms') }}</th>
+                        <th class="w-1/6 py-2 pr-3">{{ __('lab.common.metrics.wall_ms') }}</th>
+                        <th class="w-1/6 py-2">{{ __('lab.common.metrics.memory') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,20 +37,20 @@
                                     {{ $row['variant']->title }}
                                 </a>
                                 @if ($row['variant']->key === $worst)
-                                    <span class="ml-1 rounded bg-red-200 px-1.5 text-xs text-red-900">worst</span>
+                                    <span class="ml-1 rounded bg-red-200 px-1.5 text-xs text-red-900">{{ __('lab.n_plus_one.worst') }}</span>
                                 @elseif ($row['variant']->key === $best)
-                                    <span class="ml-1 rounded bg-emerald-200 px-1.5 text-xs text-emerald-900">best</span>
+                                    <span class="ml-1 rounded bg-emerald-200 px-1.5 text-xs text-emerald-900">{{ __('lab.n_plus_one.best') }}</span>
                                 @endif
                                 @if ($p->error)
                                     <div class="text-xs text-red-700">{{ Str::limit($p->error, 120) }}</div>
                                 @elseif (! $row['variant']->ranked)
-                                    <div class="text-xs text-stone-500">failure demo — not ranked</div>
+                                    <div class="text-xs text-stone-500">{{ __('lab.n_plus_one.failure_demo') }}</div>
                                 @endif
                             </td>
                             @foreach ([
-                                ['queries', $p->queries, number_format($p->queries)],
-                                ['db', $p->dbMs, number_format($p->dbMs, 1)],
-                                ['wall', $p->wallMs, number_format($p->wallMs, 1)],
+                                ['queries', $p->queries, Number::format($p->queries)],
+                                ['db', $p->dbMs, Number::format($p->dbMs, 1)],
+                                ['wall', $p->wallMs, Number::format($p->wallMs, 1)],
                                 ['memory', $p->memoryBytes, Number::fileSize($p->memoryBytes, 1)],
                             ] as [$metric, $value, $formatted])
                                 <td class="py-2 pr-3">
@@ -69,6 +65,6 @@
                 </tbody>
             </table>
         </div>
-        <x-slot:footer>Best/worst = fewest/most queries (ties: wall time) excluding the failure demos.</x-slot:footer>
+        <x-slot:footer>{{ __('lab.n_plus_one.ranking_note') }}</x-slot:footer>
     </x-card>
 </x-layouts.app>

@@ -28,9 +28,9 @@ test('every lab section renders', function (string $section) {
 
     $this->get(route('lab.collections', ['section' => $section]))
         ->assertOk()
-        ->assertSee(CollectionExamples::SECTIONS[$section])
-        ->assertDontSee('Error:</strong>', false);
-})->with(array_keys(CollectionExamples::SECTIONS));
+        ->assertSee(CollectionExamples::sections()[$section])
+        ->assertDontSee(__('lab.common.error').'</strong>', false);
+})->with(CollectionExamples::SECTIONS);
 
 test('unknown section is a 404', function () {
     $this->get(route('lab.collections', ['section' => 'nope']))->assertNotFound();
@@ -41,7 +41,7 @@ test('lab sections run a constant number of queries', function (string $section)
         fn (int $n) => seedCollectionsLab($n),
         fn () => $this->get(route('lab.collections', ['section' => $section])),
     );
-})->with(array_keys(CollectionExamples::SECTIONS));
+})->with(CollectionExamples::SECTIONS);
 
 test('chunk() skips rows when the callback changes the filtered column; chunkById() does not', function () {
     config(['database.seed_scale' => 'small']);

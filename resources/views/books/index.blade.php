@@ -1,4 +1,4 @@
-<x-layouts.app title="Catalog">
+<x-layouts.app :title="__('ui.catalog.title')">
     <div class="grid gap-8 md:grid-cols-[14rem_1fr]">
         <aside>
             {{-- @include shares the parent's variables; extra ones can be passed explicitly. --}}
@@ -16,11 +16,11 @@
                             {{ $label }} <span aria-hidden="true">×</span>
                         </a>
                     @endforeach
-                    <a href="{{ route('books.index') }}" class="text-stone-500 hover:underline">Clear all</a>
+                    <a href="{{ route('books.index') }}" class="text-stone-500 hover:underline">{{ __('ui.catalog.clear_all') }}</a>
                 </div>
             @endif
 
-            <p class="mb-4 text-sm text-stone-500">{{ number_format($books->total()) }} books</p>
+            <p class="mb-4 text-sm text-stone-500">{{ trans_choice('ui.counts.books', $books->total(), ['count' => Number::format($books->total())]) }}</p>
 
             <div class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
                 @forelse ($books as $book)
@@ -28,7 +28,7 @@
                 @empty
                     {{-- @forelse empty state --}}
                     <x-card class="col-span-full text-center text-stone-500">
-                        No books match these filters. <a href="{{ route('books.index') }}" class="text-amber-700 underline">Reset filters</a>
+                        {{ __('ui.catalog.empty') }} <a href="{{ route('books.index') }}" class="text-amber-700 underline">{{ __('ui.catalog.reset') }}</a>
                     </x-card>
                 @endforelse
             </div>

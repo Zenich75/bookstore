@@ -23,11 +23,11 @@ class LabCollectionsController extends Controller
             app('debugbar')->disable();
         }
 
-        $section = $request->string('section', array_key_first(CollectionExamples::SECTIONS))->toString();
-        abort_unless(array_key_exists($section, CollectionExamples::SECTIONS), 404);
+        $section = $request->string('section', CollectionExamples::SECTIONS[0])->toString();
+        abort_unless(in_array($section, CollectionExamples::SECTIONS, true), 404);
 
         return view('lab.collections', [
-            'sections' => CollectionExamples::SECTIONS,
+            'sections' => CollectionExamples::sections(),
             'section' => $section,
             'notes' => $examples->notes($section),
             'results' => array_map(fn ($comparison) => [

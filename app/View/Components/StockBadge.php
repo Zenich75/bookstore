@@ -39,11 +39,7 @@ class StockBadge extends Component
 
     public function label(): string
     {
-        return match ($this->state()) {
-            'out' => 'Out of stock',
-            'low' => 'Low stock',
-            'in' => 'In stock',
-        };
+        return __('ui.stock_badge.'.$this->state());
     }
 
     public function render(): View|Closure|string

@@ -1,8 +1,5 @@
-<x-layouts.app title="Lab: Collections vs Query Builder">
-    <p class="-mt-2 mb-4 max-w-3xl text-sm text-stone-600">
-        Each comparison solves the same task in different ways. Metrics are from the second of two runs, except
-        for <em>whole-table</em> comparisons, which run once. Write comparisons are rolled back. Debugbar is off on this page.
-    </p>
+<x-layouts.app :title="__('lab.collections.title')">
+    <p class="-mt-2 mb-4 max-w-3xl text-sm text-stone-600">{{ __('lab.collections.intro') }}</p>
 
     <nav class="mb-6 flex flex-wrap gap-2 text-sm">
         @foreach ($sections as $key => $title)
@@ -32,8 +29,8 @@
                 <x-slot:header class="flex flex-wrap items-baseline justify-between gap-2">
                     <span>{{ $comparison->title }}</span>
                     <span class="flex gap-1 text-xs font-normal">
-                        @if ($comparison->heavy)<span class="rounded bg-stone-200 px-1.5">whole table · single run</span>@endif
-                        @if ($comparison->writes)<span class="rounded bg-emerald-100 px-1.5 text-emerald-800">writes · rolled back</span>@endif
+                        @if ($comparison->heavy)<span class="rounded bg-stone-200 px-1.5">{{ __('lab.collections.heavy') }}</span>@endif
+                        @if ($comparison->writes)<span class="rounded bg-emerald-100 px-1.5 text-emerald-800">{{ __('lab.collections.writes') }}</span>@endif
                     </span>
                 </x-slot:header>
 
@@ -42,11 +39,11 @@
                 <table class="mb-4 w-full text-sm">
                     <thead class="text-left text-xs uppercase text-stone-400">
                         <tr>
-                            <th class="py-1 pr-3">Approach</th>
-                            <th class="w-1/6 py-1 pr-3">Queries</th>
-                            <th class="w-1/6 py-1 pr-3">DB ms</th>
-                            <th class="w-1/6 py-1 pr-3">Wall ms</th>
-                            <th class="w-1/6 py-1">Peak memory</th>
+                            <th class="py-1 pr-3">{{ __('lab.common.metrics.approach') }}</th>
+                            <th class="w-1/6 py-1 pr-3">{{ __('lab.common.metrics.queries') }}</th>
+                            <th class="w-1/6 py-1 pr-3">{{ __('lab.common.metrics.db_ms') }}</th>
+                            <th class="w-1/6 py-1 pr-3">{{ __('lab.common.metrics.wall_ms') }}</th>
+                            <th class="w-1/6 py-1">{{ __('lab.common.metrics.memory') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,9 +52,9 @@
                             <tr class="border-t border-stone-100">
                                 <td class="py-1.5 pr-3 font-mono text-xs">{{ $run['approach']->label }}</td>
                                 @foreach ([
-                                    ['queries', $p->queries, number_format($p->queries)],
-                                    ['db', $p->dbMs, number_format($p->dbMs, 1)],
-                                    ['wall', $p->wallMs, number_format($p->wallMs, 1)],
+                                    ['queries', $p->queries, Number::format($p->queries)],
+                                    ['db', $p->dbMs, Number::format($p->dbMs, 1)],
+                                    ['wall', $p->wallMs, Number::format($p->wallMs, 1)],
                                     ['memory', $p->memoryBytes, Number::fileSize($p->memoryBytes, 1)],
                                 ] as [$metric, $value, $formatted])
                                     <td class="py-1.5 pr-3">
@@ -83,12 +80,12 @@
                                 @endif
                                 <pre class="overflow-x-auto rounded bg-stone-900 p-2 text-xs text-stone-100">{{ $run['approach']->code() }}</pre>
                                 @if ($p->error)
-                                    <p class="rounded bg-red-50 p-2 text-xs text-red-800"><strong>Error:</strong> {{ $p->error }}</p>
+                                    <p class="rounded bg-red-50 p-2 text-xs text-red-800"><strong>{{ __('lab.common.error') }}</strong> {{ $p->error }}</p>
                                 @else
                                     <pre class="max-h-56 overflow-auto rounded bg-stone-100 p-2 text-xs">{{ json_encode($p->result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
                                 @endif
                                 <details class="text-xs">
-                                    <summary class="cursor-pointer text-stone-500">SQL — {{ $p->queries }} {{ Str::plural('query', $p->queries) }}, {{ count($p->groups) }} distinct</summary>
+                                    <summary class="cursor-pointer text-stone-500">{{ __('lab.common.sql_distinct', ['queries' => trans_choice('lab.common.queries', $p->queries), 'distinct' => count($p->groups)]) }}</summary>
                                     <ol class="mt-1 space-y-1">
                                         @foreach ($p->groups as $group)
                                             <li class="flex gap-2"><span class="w-10 shrink-0 text-right tabular-nums">×{{ $group['count'] }}</span><code class="break-all">{{ $group['sql'] }}</code></li>

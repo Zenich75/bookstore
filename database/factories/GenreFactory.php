@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Genre;
 use Database\Factories\Concerns\GeneratesUniqueValues;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Genre>
@@ -18,7 +19,7 @@ class GenreFactory extends Factory
      */
     public function definition(): array
     {
-        $name = ucfirst(fake()->words(2, true));
+        $name = Str::ucfirst(preg_replace('/[\s\p{P}]+$/u', '', fake()->realTextBetween(10, 25)));
 
         return [
             'name' => $name,

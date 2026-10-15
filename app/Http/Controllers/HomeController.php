@@ -17,10 +17,10 @@ class HomeController extends Controller
     {
         return view('home', [
             'counts' => [
-                'Books' => Book::count(),
-                'Authors' => Author::count(),
-                'Warehouses' => Warehouse::count(),
-                'Approved reviews' => Review::where('is_approved', true)->count(),
+                __('ui.home.stats.books') => Book::count(),
+                __('ui.home.stats.authors') => Author::count(),
+                __('ui.home.stats.warehouses') => Warehouse::count(),
+                __('ui.home.stats.approved_reviews') => Review::where('is_approved', true)->count(),
             ],
             'latestBooks' => BookController::cardQuery()
                 ->whereNotNull('published_at')

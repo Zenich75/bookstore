@@ -1,4 +1,4 @@
-<x-layouts.app title="Authors">
+<x-layouts.app :title="__('ui.authors.title')">
     <x-card>
         <ul class="divide-y divide-stone-100">
             {{-- @each renders a partial per item (with an "empty" view); unlike @include,

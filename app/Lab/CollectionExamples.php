@@ -16,6 +16,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 
 /**
@@ -27,19 +28,31 @@ use Illuminate\Support\Str;
 final class CollectionExamples
 {
     /**
-     * @var array<string, string> section key => title
+     * Section keys in display order; titles: lang/{en,uk}/lab.php => collections.sections.*
+     *
+     * @var list<string>
      */
     public const SECTIONS = [
-        'types' => 'a. Return types',
-        'eloquent-collection' => 'b. Eloquent Collection methods',
-        'relation-query' => 'c. Relation query vs loaded relation',
-        'aggregates' => 'd. Aggregates: SQL vs PHP',
-        'large-volumes' => 'e. Large volumes',
-        'chunk-pitfall' => 'f. Chunk pitfall',
-        'mass-update' => 'g. Mass update',
-        'subqueries' => 'h. Subqueries',
-        'report' => 'i. Report: SQL vs PHP',
+        'types',
+        'eloquent-collection',
+        'relation-query',
+        'aggregates',
+        'large-volumes',
+        'chunk-pitfall',
+        'mass-update',
+        'subqueries',
+        'report',
     ];
+
+    /**
+     * @return array<string, string> section key => translated title
+     */
+    public static function sections(): array
+    {
+        return collect(self::SECTIONS)
+            ->mapWithKeys(fn (string $key) => [$key => __('lab.collections.sections.'.$key)])
+            ->all();
+    }
 
     /**
      * The "PHP way" stock report hydrates every stock row with its book. Above this
@@ -124,7 +137,7 @@ final class CollectionExamples
         $this->prepare();
 
         return $section === 'report' && $this->reportCapped
-            ? ['More than '.number_format(self::PHP_REPORT_CAP).' stock rows: both approaches run on the first warehouse only, so the PHP way fits in memory.']
+            ? [__('lab.collections.capped', ['cap' => Number::format(self::PHP_REPORT_CAP)])]
             : [];
     }
 
@@ -195,8 +208,8 @@ final class CollectionExamples
 
     private function types(): void
     {
-        $this->compare('types', 'What comes back',
-            'The same three rows read three ways. DB::table() returns stdClass with raw column values; Eloquent returns models with casts (enum, Carbon, array) and relation methods, but no relation is loaded until you ask; toBase() runs the Eloquent query (soft-delete scope included) and skips hydration. DB::table() knows nothing about soft deletes.',
+        $this->compare('types', __('lab.collections.comparisons.what_comes_back'),
+            __('lab.collections.comparisons.what_comes_back_d'),
             [
                 self::approach('DB::table()->get()', function () {
                     return self::describe(DB::table('books')->whereNotNull('published_at')->orderBy('id')->limit(3)->get());
@@ -209,8 +222,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('types', 'Hydration cost: every book',
-            'One query each; the difference is what PHP builds from the rows. Eloquent creates a model per row (attributes, original copy, casts on access), which costs time and memory.',
+        $this->compare('types', __('lab.collections.comparisons.hydration'),
+            __('lab.collections.comparisons.hydration_d'),
             [
                 self::approach('DB::table()->get()', function () {
                     $rows = DB::table('books')->get();
@@ -232,17 +245,17 @@ final class CollectionExamples
 
     private function eloquentCollection(): void
     {
-        $this->compare('eloquent-collection', 'load / loadMissing / loadCount vs per-model queries',
-            'Eloquent Collection methods eager-load for every model at once; doing it per model is an N+1 in disguise.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.load_methods'),
+            __('lab.collections.comparisons.load_methods_d'),
             [
-                self::approach('Collection methods', function () {
+                self::approach(__('lab.collections.labels.collection_methods'), function () {
                     $books = Book::orderBy('id')->limit(20)->get();
 
                     $books->load('genre')->loadMissing(['genre', 'cover'])->loadCount('reviews');
 
                     return $books->pluck('reviews_count', 'id');
                 }),
-                self::approach('Per model', function () {
+                self::approach(__('lab.collections.labels.per_model'), function () {
                     $books = Book::orderBy('id')->limit(20)->get();
 
                     $books->each(function (Book $book) {
@@ -255,23 +268,23 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('eloquent-collection', 'find() / modelKeys() vs base collection',
-            'Eloquent Collection knows primary keys: find($id) and modelKeys(). On a base collection you spell it out.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.find_keys'),
+            __('lab.collections.comparisons.find_keys_d'),
             [
-                self::approach('Eloquent Collection', function () {
+                self::approach(__('lab.collections.labels.eloquent'), function () {
                     $books = Book::orderBy('id')->limit(20)->get();
 
                     return ['found' => $books->find($books->last()->id)?->title, 'keys' => $books->modelKeys()];
                 }),
-                self::approach('Base Collection', function () {
+                self::approach(__('lab.collections.labels.base'), function () {
                     $books = Book::orderBy('id')->limit(20)->get()->toBase();
 
                     return ['found' => $books->firstWhere('id', $books->last()->id)?->title, 'keys' => $books->pluck('id')->all()];
                 }),
             ]);
 
-        $this->compare('eloquent-collection', 'fresh() vs map->fresh()',
-            'Reloading models: the collection does it with one whereIn query, per model it is one query each.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.fresh'),
+            __('lab.collections.comparisons.fresh_d'),
             [
                 self::approach('$books->fresh()', function () {
                     $books = Book::orderBy('id')->limit(20)->get();
@@ -285,8 +298,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('eloquent-collection', 'toQuery()->update()',
-            'toQuery() turns a collection back into a query over its keys: one UPDATE ... WHERE id IN (...). Identical to building the whereIn by hand.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.to_query_update'),
+            __('lab.collections.comparisons.to_query_update_d'),
             [
                 self::approach('$books->toQuery()->update()', function () {
                     $books = Book::orderBy('id')->limit(20)->get();
@@ -300,10 +313,10 @@ final class CollectionExamples
                 }),
             ], writes: true);
 
-        $this->compare('eloquent-collection', 'Comparing by key vs by value: diff / intersect / unique / contains',
-            'Eloquent Collection compares models by primary key. A base collection compares by value (diff/intersect cast models to JSON, unique/contains use ==), so an in-memory change or a different instance of the same row counts as "different". Books 6–10 are in both sets; book 6 has an unsaved price change in the second set.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.by_key'),
+            __('lab.collections.comparisons.by_key_d'),
             [
-                self::approach('Eloquent Collection (by key)', function () {
+                self::approach(__('lab.collections.labels.by_key'), function () {
                     $first = Book::orderBy('id')->limit(10)->get();
                     $second = Book::orderBy('id')->offset(5)->limit(10)->get();
                     $second->first()->price += 1; // in memory only
@@ -315,7 +328,7 @@ final class CollectionExamples
                         'contains' => $first->contains(Book::find($first->first()->id)),
                     ];
                 }),
-                self::approach('Base Collection (by value)', function () {
+                self::approach(__('lab.collections.labels.by_value'), function () {
                     $first = Book::orderBy('id')->limit(10)->get()->toBase();
                     $second = Book::orderBy('id')->offset(5)->limit(10)->get()->toBase();
                     $second->first()->price += 1; // in memory only
@@ -329,8 +342,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('eloquent-collection', 'makeVisible / makeHidden vs mapping arrays',
-            'Profile hides phone via #[Hidden]. makeVisible()/makeHidden() change serialization for the whole collection.',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.visibility'),
+            __('lab.collections.comparisons.visibility_d'),
             [
                 self::approach('makeVisible / makeHidden', function () {
                     $profiles = Profile::orderBy('id')->limit(3)->get();
@@ -347,16 +360,16 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('eloquent-collection', 'map() keeps the Eloquent Collection only while it returns models',
-            'When the callback returns something other than models, you get a base Illuminate\Support\Collection — and lose load(), modelKeys(), toQuery()... (pluck/keys/... behave the same).',
+        $this->compare('eloquent-collection', __('lab.collections.comparisons.map_type'),
+            __('lab.collections.comparisons.map_type_d'),
             [
-                self::approach('map() returning models', function () {
+                self::approach(__('lab.collections.labels.map_models'), function () {
                     $books = Book::orderBy('id')->limit(5)->get();
                     $mapped = $books->map(fn (Book $book) => $book->setAttribute('title', Str::upper($book->title)));
 
                     return ['before' => $books::class, 'after' => $mapped::class];
                 }),
-                self::approach('map() returning strings', function () {
+                self::approach(__('lab.collections.labels.map_strings'), function () {
                     $books = Book::orderBy('id')->limit(5)->get();
                     $mapped = $books->map(fn (Book $book) => $book->title);
 
@@ -367,8 +380,8 @@ final class CollectionExamples
 
     private function relationQuery(): void
     {
-        $this->compare('relation-query', 'Count with a condition',
-            '$book->reviews() is a query builder (COUNT in SQL); $book->reviews is a loaded collection (every review hydrated, then filtered in PHP). Sample: the book with most reviews.',
+        $this->compare('relation-query', __('lab.collections.comparisons.count_condition'),
+            __('lab.collections.comparisons.count_condition_d'),
             [
                 self::approach('reviews()->where()->count()', function () {
                     $book = Book::find($this->busiestBookId);
@@ -382,8 +395,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('relation-query', 'exists() vs count() > 0',
-            'Both are one query; EXISTS can stop at the first matching row, COUNT has to count them all.',
+        $this->compare('relation-query', __('lab.collections.comparisons.exists_count'),
+            __('lab.collections.comparisons.exists_count_d'),
             [
                 self::approach('exists()', function () {
                     $book = Book::find($this->busiestBookId);
@@ -397,8 +410,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('relation-query', 'firstWhere on the query vs on the collection',
-            'On the relation query, firstWhere() is where()->first(): LIMIT 1 in SQL. On the loaded relation it filters in PHP after loading everything.',
+        $this->compare('relation-query', __('lab.collections.comparisons.first_where'),
+            __('lab.collections.comparisons.first_where_d'),
             [
                 self::approach('reviews()->firstWhere()', function () {
                     $book = Book::find($this->busiestBookId);
@@ -415,15 +428,15 @@ final class CollectionExamples
 
     private function aggregates(): void
     {
-        $this->compare('aggregates', 'avg / sum / max price',
-            'The database returns three numbers; the PHP way transfers and hydrates every price first.',
+        $this->compare('aggregates', __('lab.collections.comparisons.avg_sum_max'),
+            __('lab.collections.comparisons.avg_sum_max_d'),
             [
-                self::approach('SQL', function () {
+                self::approach(__('lab.collections.labels.sql'), function () {
                     return (array) Book::toBase()
                         ->selectRaw('avg(price) as avg_price, sum(price) as total_price, max(price) as max_price')
                         ->first();
                 }),
-                self::approach('Collection', function () {
+                self::approach(__('lab.collections.labels.collection'), function () {
                     $books = Book::get(['price']);
 
                     return [
@@ -434,10 +447,10 @@ final class CollectionExamples
                 }),
             ], heavy: true);
 
-        $this->compare('aggregates', 'Count by format',
-            'GROUP BY in SQL vs groupBy() on a collection.',
+        $this->compare('aggregates', __('lab.collections.comparisons.count_by_format'),
+            __('lab.collections.comparisons.count_by_format_d'),
             [
-                self::approach('SQL groupBy', function () {
+                self::approach(__('lab.collections.labels.sql_group_by'), function () {
                     return Book::toBase()
                         ->select('format')
                         ->selectRaw('count(*) as total')
@@ -445,7 +458,7 @@ final class CollectionExamples
                         ->orderBy('format')
                         ->pluck('total', 'format');
                 }),
-                self::approach('Collection groupBy', function () {
+                self::approach(__('lab.collections.labels.collection_group_by'), function () {
                     return Book::get(['format'])
                         ->groupBy(fn (Book $book) => $book->format->value)
                         ->map->count()
@@ -453,8 +466,8 @@ final class CollectionExamples
                 }),
             ], heavy: true);
 
-        $this->compare('aggregates', 'pluck in SQL vs on a collection',
-            'Book::pluck() selects two columns; get()->pluck() loads whole models and throws most of it away.',
+        $this->compare('aggregates', __('lab.collections.comparisons.pluck'),
+            __('lab.collections.comparisons.pluck_d'),
             [
                 self::approach('Book::pluck()', function () {
                     return Book::pluck('title', 'id')->take(3);
@@ -467,10 +480,10 @@ final class CollectionExamples
 
     private function largeVolumes(): void
     {
-        $this->compare('large-volumes', 'Process every book: sum the price of all ebooks',
-            "Each approach touches every book model. chunk/chunkById run one query per 1000 rows and keep only one chunk in memory. lazy/lazyById do the same behind a LazyCollection. cursor() runs one query and hydrates one model at a time — but it cannot eager-load (relations are loaded per page of parents, and cursor has no pages), and with MySQL's default buffered queries the driver still receives the whole result set into PHP memory before the first row is yielded, so the saving is limited to not hydrating everything at once. The pipeline stops after 10 matches, yet the query has already transferred every row. Numbers below are as measured — single cold run each.",
+        $this->compare('large-volumes', __('lab.collections.comparisons.large'),
+            __('lab.collections.comparisons.large_d'),
             [
-                self::approach('get() (baseline)', function () {
+                self::approach(__('lab.collections.labels.baseline'), function () {
                     return Book::get()->where('format', BookFormat::Ebook)->sum('price');
                 }),
                 self::approach('chunk(1000)', function () {
@@ -513,20 +526,20 @@ final class CollectionExamples
 
                     return $sum;
                 }),
-                self::approach('cursor() pipeline: filter → map → take(10)', function () {
+                self::approach(__('lab.collections.labels.pipeline'), function () {
                     return Book::cursor()
                         ->filter(fn (Book $book) => $book->format === BookFormat::Ebook)
                         ->map(fn (Book $book) => $book->title)
                         ->take(10)
                         ->all();
-                }, 'Different task (first 10 ebook titles): shows that the LazyCollection stops early.'),
+                }, __('lab.collections.pipeline_note')),
             ], heavy: true);
     }
 
     private function chunkPitfall(): void
     {
-        $this->compare('chunk-pitfall', 'Approve all unapproved reviews in chunks',
-            'chunk() pages with LIMIT/OFFSET. Updating rows so they no longer match the WHERE shifts the remaining rows: page 2 starts a whole page too far and skips a chunk every time. chunkById() pages with WHERE id > last_id, so changing the filtered column is safe. (Rolled back.)',
+        $this->compare('chunk-pitfall', __('lab.collections.comparisons.chunk_pitfall'),
+            __('lab.collections.comparisons.chunk_pitfall_d'),
             [
                 self::approach('chunk(100)', function () {
                     $before = Review::where('is_approved', false)->count();
@@ -555,8 +568,8 @@ final class CollectionExamples
 
     private function massUpdate(): void
     {
-        $this->compare('mass-update', 'Raise the price of 200 books by $1',
-            'Eloquent query updates set updated_at automatically; DB::table() does not; save() per model costs one UPDATE each (and fires model events — observers are stage 6). (Rolled back.)',
+        $this->compare('mass-update', __('lab.collections.comparisons.mass_update'),
+            __('lab.collections.comparisons.mass_update_d'),
             [
                 self::approach('$books->toQuery()->increment()', function () {
                     $books = Book::orderBy('id')->limit(200)->get();
@@ -604,8 +617,8 @@ final class CollectionExamples
 
     private function subqueries(): void
     {
-        $this->compare('subqueries', 'Latest review date per book',
-            'addSelect() with a correlated subquery returns one extra column in the same query; eager-loading latestReview runs a second query and hydrates a Review per book. The subquery wins when you need a value, the relation when you need the model.',
+        $this->compare('subqueries', __('lab.collections.comparisons.latest_review'),
+            __('lab.collections.comparisons.latest_review_d'),
             [
                 self::approach('addSelect(subquery)', function () {
                     return Book::addSelect([
@@ -621,8 +634,8 @@ final class CollectionExamples
                 }),
             ]);
 
-        $this->compare('subqueries', 'whereExists vs whereHas',
-            'Books with at least one 5-star approved review. whereHas() generates the same EXISTS subquery you would write by hand with whereExists() — compare the SQL.',
+        $this->compare('subqueries', __('lab.collections.comparisons.where_exists'),
+            __('lab.collections.comparisons.where_exists_d'),
             [
                 self::approach('whereExists()', function () {
                     return Book::whereExists(fn (QueryBuilder $query) => $query
@@ -640,15 +653,15 @@ final class CollectionExamples
 
     private function report(): void
     {
-        $this->compare('report', 'Stock by warehouse and root genre',
-            'The same report as /reports/stock. SQL: joins + GROUP BY return a few dozen rows. PHP: hydrate every stock row with its book, then groupBy/sum on collections.',
+        $this->compare('report', __('lab.collections.comparisons.stock_report'),
+            __('lab.collections.comparisons.stock_report_d'),
             [
-                self::approach('SQL (StockByWarehouseGenreReport)', function () {
+                self::approach(__('lab.collections.labels.report_sql'), function () {
                     $rows = (new StockByWarehouseGenreReport($this->reportWarehouseId))->rows();
 
                     return ['groups' => $rows->count(), 'quantity' => $rows->sum('quantity'), 'value_cents' => $rows->sum('value_cents'), 'first' => $rows->first()];
                 }),
-                self::approach('PHP (models + collections)', function () {
+                self::approach(__('lab.collections.labels.report_php'), function () {
                     $genres = Genre::get(['id', 'name', 'parent_id'])->keyBy('id');
 
                     $rows = Stock::query()

@@ -1,31 +1,32 @@
-# 02 — Eloquent relationships
+# 02 — Зв’язки Eloquent
 
-## Goal
+## Мета
 
-Model every relation of the warehouse domain in Eloquent: one-to-one, one-to-many, many-to-many
-(with plain and custom pivots), "has-one-of-many", "through" relations and polymorphic ones.
-Learn to query, aggregate and write them — always loading relations explicitly, because strict
-mode forbids lazy loading.
+Описати в Eloquent кожен зв’язок предметної області складу: «один до одного», «один до багатьох»,
+«багато до багатьох» (зі звичайною та власною проміжною таблицею (pivot)), «один із багатьох»
+(has-one-of-many), зв’язки «через» (through) і поліморфні. Навчитися робити до них запити,
+агрегувати й записувати — завжди завантажуючи зв’язки явно, бо суворий режим (strict mode)
+забороняє ліниве завантаження (lazy loading).
 
-Open **<http://localhost/lab/relations>**: every example shows its code, result and the exact SQL.
+Відкрийте **<http://localhost/lab/relations>**: кожен приклад показує свій код, результат і точний SQL.
 
-## Where to look in code
+## Де дивитися в коді
 
-- `app/Models/*` — relationship methods with return types and `@return` generics.
-- `app/Models/Stock.php` — custom pivot (`extends Pivot`) with its own id and an accessor.
+- `app/Models/*` — методи зв’язків із типами результату та generic-анотаціями `@return`.
+- `app/Models/Stock.php` — власна pivot-модель (`extends Pivot`) зі своїм id та аксесором.
 - `app/Providers/AppServiceProvider.php` — `Relation::enforceMorphMap()`.
-- `database/migrations/2026_10_16_100000_use_morph_aliases_in_polymorphic_columns.php` — data
-  migration from class names to aliases.
+- `database/migrations/2026_10_16_100000_use_morph_aliases_in_polymorphic_columns.php` — міграція
+  даних з імен класів на псевдоніми.
 - `database/factories/BookFactory.php` — `withReviews()`, `withAuthors()`, `inWarehouses()`;
   `AuthorFactory::withBooks()` (`has()` / `hasAttached()`).
-- `app/Lab/RelationExamples.php`, `app/Lab/Samples.php` — the lab registry and sample records.
+- `app/Lab/RelationExamples.php`, `app/Lab/Samples.php` — реєстр прикладів лабораторії та зразкові записи.
 - `tests/Feature/Relations/*`, `tests/Feature/Lab/LabRelationsTest.php`.
 
-## Key concepts
+## Ключові поняття
 
-### Relation types in this project
+### Типи зв’язків у проєкті
 
-| Type | Example | Generated SQL (short) |
+| Тип | Приклад | Згенерований SQL (скорочено) |
 |---|---|---|
 | `hasOne` | `User::profile()` | `select * from profiles where user_id in (…)` |
 | `belongsTo` | `Review::book()`, `User::warehouse()`, `Genre::parent()` | `select * from books where id in (…)` |
@@ -33,7 +34,7 @@ Open **<http://localhost/lab/relations>**: every example shows its code, result 
 | `hasMany` + `where` | `Book::approvedReviews()` | `… where book_id in (…) and is_approved = 1` |
 | `hasOne` + `where` | `Warehouse::manager()` | `select * from users where role = 'manager' and warehouse_id in (…)` |
 | `hasOne()->latestOfMany()` | `Book::latestReview()` | `inner join (select max(id) … group by book_id)` |
-| `hasOne()->ofMany('rating','max')` | `Book::bestReview()` | nested `max(rating)` then `max(id)` subqueries joined back |
+| `hasOne()->ofMany('rating','max')` | `Book::bestReview()` | вкладені підзапити `max(rating)`, потім `max(id)`, приєднані назад |
 | `hasOneThrough` | `Warehouse::managerProfile()` | `select profiles.*, users.warehouse_id as laravel_through_key from profiles inner join users on users.id = profiles.user_id where users.warehouse_id in (…)` |
 | `hasManyThrough` | `Genre::reviews()` | `select reviews.* … inner join books on books.id = reviews.book_id where books.genre_id = ? and books.deleted_at is null` |
 | `belongsToMany` | `Book::genres()` / `Genre::secondaryBooks()` | `select genres.*, book_genre.book_id as pivot_book_id … inner join book_genre …` |
@@ -42,24 +43,24 @@ Open **<http://localhost/lab/relations>**: every example shows its code, result 
 | `belongsToMany` + `using()` | `Warehouse::books()` / `Book::warehouses()` | `… stocks.id as pivot_id, stocks.quantity as pivot_quantity …` |
 | `morphOne` (+ `where`) | `Book::cover()`, `Author::photo()` | `select * from images where imageable_type = 'book' and imageable_id in (…) and type = 'cover'` |
 | `morphMany` | `Book::images()`, `Author::images()` | `… where imageable_type = 'book' and imageable_id in (…)` |
-| `morphTo` | `Image::imageable()` | one query per type: `select * from authors where id in (…)` |
+| `morphTo` | `Image::imageable()` | по одному запиту на тип: `select * from authors where id in (…)` |
 | `morphToMany` | `Book::tags()`, `Author::tags()` | `… inner join taggables … where taggable_type = 'book'` |
 | `morphedByMany` | `Tag::books()`, `Tag::authors()` | `… inner join taggables on books.id = taggables.taggable_id where taggable_type = 'book'` |
 
-Querying (lab section "Querying relations"): `has`, `whereHas`, `doesntHave`, `whereRelation`
-add `exists (select …)` subqueries; `withCount`, `withAvg('reviews', 'rating')`,
-`withSum('stocks', 'quantity')`, `withExists('cover')` add correlated subselects as
+Запити (розділ лабораторії «Запити до зв’язків»): `has`, `whereHas`, `doesntHave`, `whereRelation`
+додають підзапити `exists (select …)`; `withCount`, `withAvg('reviews', 'rating')`,
+`withSum('stocks', 'quantity')`, `withExists('cover')` додають корельовані підзапити у вибірку як
 `reviews_count`, `reviews_avg_rating`, `stocks_sum_quantity`, `cover_exists`.
 
-Writing (lab section "Writing relations", rolled back): `attach`, `detach`, `sync`,
-`syncWithoutDetaching`, `toggle` (the last three return `attached/detached/updated` ids),
-`updateExistingPivot`, `associate`/`dissociate` (belongsTo — remember to `save()`),
+Запис (розділ «Запис зв’язків», з відкатом): `attach`, `detach`, `sync`,
+`syncWithoutDetaching`, `toggle` (останні три повертають id у `attached/detached/updated`),
+`updateExistingPivot`, `associate`/`dissociate` (belongsTo — не забудьте `save()`),
 `saveMany`/`createMany` (hasMany/morphMany).
 
-### Strict mode and loading relations
+### Суворий режим і завантаження зв’язків
 
-With `Model::shouldBeStrict()` `$book->authors` on a book that wasn't loaded with `authors`
-throws `LazyLoadingViolationException`. Load explicitly:
+З `Model::shouldBeStrict()` звернення `$book->authors` до книги, завантаженої без `authors`, кидає
+`LazyLoadingViolationException`. Завантажуйте явно:
 
 ```php
 Book::with('authors')->find($id);              // eager, 2 queries for any number of books
@@ -67,14 +68,14 @@ $book->load('authors');                        // eager, after the fact
 $book->authors()->where(...)->get();           // relation *method* = a query builder, always fine
 ```
 
-### Pitfalls
+### Підводні камені
 
-**`hasOne` when there are many rows.** `hasOne(Review::class)` on a book with 10 reviews returns
-an arbitrary one (whatever the DB returns first). Use "one of many":
-`->latestOfMany()`, `->oldestOfMany()` or `->ofMany('rating', 'max')`. Ties on the aggregate
-column are broken by `MAX(id)`, so the result is deterministic.
+**`hasOne`, коли рядків багато.** `hasOne(Review::class)` для книги з 10 відгуками повертає
+довільний відгук (той, що база поверне першим). Використовуйте «один із багатьох»:
+`->latestOfMany()`, `->oldestOfMany()` або `->ofMany('rating', 'max')`. Нічию за агрегованим
+стовпцем розв’язує `MAX(id)`, тож результат детермінований.
 
-**Key order in `hasOneThrough` / `hasManyThrough`.**
+**Порядок ключів у `hasOneThrough` / `hasManyThrough`.**
 
 ```php
 $this->hasManyThrough(
@@ -87,50 +88,50 @@ $this->hasManyThrough(
 );
 ```
 
-Swapping the 3rd and 4th arguments is the classic mistake: the SQL is valid but joins the
-wrong columns and returns nothing (or garbage). Soft deletes on the intermediate model are
-applied automatically (`books.deleted_at is null`).
+Переплутати 3-й і 4-й аргументи — класична помилка: SQL коректний, але з’єднує не ті стовпці й
+повертає порожній результат (або сміття). М’яке видалення проміжної моделі застосовується
+автоматично (`books.deleted_at is null`).
 
-**Pivot columns are not loaded by default.** Without `->withPivot([...])` only the two keys are
-selected, so `$author->credit->role` is `null` — or, with strict mode on, throws
-`MissingAttributeException`; without `->withTimestamps()` `attach()` leaves
-`created_at/updated_at` empty. Both must be declared on *each side* of the relation
-(`Book::authors()` and `Author::books()`).
+**Стовпці проміжної таблиці за замовчуванням не завантажуються.** Без `->withPivot([...])`
+вибираються лише два ключі, тож `$author->credit->role` дорівнює `null`, а із суворим режимом —
+кидає `MissingAttributeException`; без `->withTimestamps()` `attach()` залишає `created_at/updated_at`
+порожніми. Обидва виклики треба оголосити з *кожного боку* зв’язку (`Book::authors()` і `Author::books()`).
 
-**Custom Pivot and `$incrementing`.** `Pivot` sets `$incrementing = false` because classic
-pivots have a composite key. `stocks` has its own auto-increment `id`, so `Stock` declares
-`#[Table(name: 'stocks', incrementing: true)]` (legacy: `public $incrementing = true;`).
-Also add `'id'` to `withPivot()` to get it on `$book->stock`. Use `->using(Stock::class)` on
-both sides, and `->as('stock')` for a readable accessor instead of `->pivot`.
+**Власна pivot-модель і `$incrementing`.** `Pivot` встановлює `$incrementing = false`, бо класичні
+проміжні таблиці мають складений ключ. У `stocks` є власний автоінкрементний `id`, тому `Stock`
+оголошує `#[Table(name: 'stocks', incrementing: true)]` (старий варіант: `public $incrementing = true;`).
+Додайте також `'id'` у `withPivot()`, щоб отримати його в `$book->stock`. Вказуйте
+`->using(Stock::class)` з обох боків і `->as('stock')` — для зрозумілої назви замість `->pivot`.
 
-**Morph map.** Without a map Eloquent stores the class name (`App\Models\Book`) in
-`imageable_type`. That couples data to code: renaming/moving a model silently orphans rows.
-`Relation::morphMap([...])` stores short aliases (`book`), but classes *not* in the map still
-fall back to class names — inconsistent data. `Relation::enforceMorphMap([...])` stores aliases
-**and throws `ClassMorphViolationException`** for any unmapped model, so forgetting to register
-a new morphable model fails loudly in tests instead of writing class names to production data.
-Existing rows are converted by a data migration (`up()` FQCN → alias, `down()` back); it uses
-plain strings, not `Book::class`, so it stays valid if models change.
+**Мапа морфів (morph map).** Без мапи Eloquent зберігає в `imageable_type` ім’я класу
+(`App\Models\Book`). Це прив’язує дані до коду: перейменування чи переміщення моделі непомітно
+залишає рядки «сиротами». `Relation::morphMap([...])` зберігає короткі псевдоніми (`book`), але
+класи, *яких немає* в мапі, як і раніше записуються іменами класів — дані стають неоднорідними.
+`Relation::enforceMorphMap([...])` зберігає псевдоніми **і кидає `ClassMorphViolationException`**
+для будь-якої моделі без псевдоніма, тож забута реєстрація нової поліморфної моделі гучно падає в
+тестах, а не записує імена класів у робочі дані. Наявні рядки перетворює міграція даних
+(`up()`: повне ім’я класу → псевдонім, `down()` — назад); вона використовує звичайні рядки, а не
+`Book::class`, тому лишається коректною, навіть якщо моделі зміняться.
 
-**Constrained relations and writes.** `Book::cover()` adds `where type = 'cover'`, but
-`$book->cover()->create([...])` does *not* set `type` for you — pass it explicitly.
+**Зв’язки з умовою і запис.** `Book::cover()` додає `where type = 'cover'`, але
+`$book->cover()->create([...])` *не* встановлює `type` за вас — передавайте його явно.
 
-### Naming conventions
+### Угоди щодо назв
 
-- `hasOne`/`belongsTo`/`morphOne`/`morphTo` → singular (`profile`, `genre`, `cover`, `imageable`);
-  `hasMany`/`belongsToMany`/`morph*Many` → plural (`reviews`, `authors`, `tags`).
-- Foreign key = `{singular_model}_id` (`genre_id`); pivot table = both singular names in
-  alphabetical order (`author_book`, `book_genre`) — then no extra arguments are needed.
-- Self-references and non-default names need explicit keys: `belongsTo(Genre::class, 'parent_id')`.
-- Constrained variants are named by meaning: `approvedReviews`, `translators`, `latestReview`.
-- Morph columns: `{name}able_type` / `{name}able_id` (`imageable`, `taggable`).
+- `hasOne`/`belongsTo`/`morphOne`/`morphTo` → однина (`profile`, `genre`, `cover`, `imageable`);
+  `hasMany`/`belongsToMany`/`morph*Many` → множина (`reviews`, `authors`, `tags`).
+- Зовнішній ключ = `{singular_model}_id` (`genre_id`); проміжна таблиця = обидві назви в однині
+  в алфавітному порядку (`author_book`, `book_genre`) — тоді додаткові аргументи не потрібні.
+- Зв’язки сам на себе й нестандартні назви потребують явних ключів: `belongsTo(Genre::class, 'parent_id')`.
+- Варіанти з умовою називаємо за змістом: `approvedReviews`, `translators`, `latestReview`.
+- Морф-стовпці: `{name}able_type` / `{name}able_id` (`imageable`, `taggable`).
 
-## Exercise
+## Вправа
 
-1. Add `Author::coAuthors()` — other authors the author has written books with. Which relation
-   type fits? (Hint: there is no single built-in one; think about a query via `books`.)
-2. Add `Book::lowestReview()` with `ofMany` and a test with tied ratings.
-3. Make `Warehouse` morphable for images (a photo of the building): what must change in
-   `enforceMorphMap`, and what happens if you forget? Write the failing test first.
-4. In the lab, compare the SQL of `Book::has('reviews', '>=', 8)` and
+1. Додайте `Author::coAuthors()` — інших авторів, з якими автор писав книги. Який тип зв’язку
+   підходить? (Підказка: готового вбудованого немає; подумайте про запит через `books`.)
+2. Додайте `Book::lowestReview()` з `ofMany` і тест з однаковими оцінками.
+3. Зробіть `Warehouse` поліморфним власником зображень (фото будівлі): що треба змінити в
+   `enforceMorphMap` і що станеться, якщо забути? Спершу напишіть тест, що падає.
+4. У лабораторії порівняйте SQL `Book::has('reviews', '>=', 8)` і
    `Book::withCount('reviews')->having('reviews_count', '>=', 8)`.

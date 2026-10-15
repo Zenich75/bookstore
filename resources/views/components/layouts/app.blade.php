@@ -17,11 +17,11 @@
 
             @php
                 $links = [
-                    'books.index' => 'Catalog',
-                    'authors.index' => 'Authors',
-                    'genres.index' => 'Genres',
-                    'warehouses.index' => 'Warehouses',
-                    'about' => 'About',
+                    'books.index' => __('ui.nav.catalog'),
+                    'authors.index' => __('ui.nav.authors'),
+                    'genres.index' => __('ui.nav.genres'),
+                    'warehouses.index' => __('ui.nav.warehouses'),
+                    'about' => __('ui.nav.about'),
                 ];
             @endphp
 
@@ -34,11 +34,11 @@
             @endforeach
 
             <span class="ml-auto flex gap-4 text-sm text-stone-500">
-                <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">Lab: relations</a>
-                <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">Lab: N+1</a>
-                <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">Lab: collections</a>
-                <a href="{{ route('reports.stock') }}" class="hover:text-amber-700">Reports</a>
-                <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-700">Admin</a>
+                <a href="{{ route('lab.relations') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_relations') }}</a>
+                <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_n_plus_one') }}</a>
+                <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
+                <a href="{{ route('reports.stock') }}" class="hover:text-amber-700">{{ __('ui.nav.reports') }}</a>
+                <a href="{{ route('admin.dashboard') }}" class="hover:text-amber-700">{{ __('ui.nav.admin') }}</a>
             </span>
         </nav>
     </header>
@@ -61,10 +61,10 @@
     </main>
 
     <footer class="mx-auto max-w-7xl px-4 py-8 text-xs text-stone-400">
-        Bookstore Warehouse — a Laravel learning project.
+        {{ __('ui.layout.tagline') }}
         {{-- @env: rendered only in the given environment(s). --}}
         @env('local')
-            <span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">local environment</span>
+            <span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-800">{{ __('ui.layout.local_env') }}</span>
         @endenv
     </footer>
 
