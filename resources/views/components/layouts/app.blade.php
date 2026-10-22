@@ -50,8 +50,20 @@
                     <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
                     <a href="{{ route('lab.models') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_models') }}</a>
                     <a href="{{ route('lab.xss') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_xss') }}</a>
+                    <a href="{{ route('lab.queues') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_queues') }}</a>
                 @endif
 
+                @role('manager', 'admin')
+                    {{-- One COUNT query per page for staff. --}}
+                    @php($unread = auth()->user()->unreadNotifications()->count())
+                    <a href="{{ route('notifications.index') }}" class="relative hover:text-amber-700" data-bell
+                       title="{{ trans_choice('ui.notifications.unread', $unread, ['count' => $unread]) }}">
+                        <span aria-hidden="true">🔔</span><span class="sr-only">{{ __('ui.notifications.title') }}</span>
+                        @if ($unread > 0)
+                            <span class="absolute -right-2 -top-2 rounded-full bg-red-600 px-1.5 text-xs leading-5 text-white" data-unread>{{ $unread }}</span>
+                        @endif
+                    </a>
+                @endrole
                 @auth
                     <span class="text-stone-700" data-user>{{ auth()->user()->name }} <span class="text-xs text-stone-400">({{ auth()->user()->role->label() }})</span></span>
                     <form method="POST" action="{{ route('logout') }}">

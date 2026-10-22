@@ -30,6 +30,14 @@ class Stock extends Pivot
      */
     public ?StockMovementReason $movementReason = null;
 
+    /**
+     * Extra columns for the next movement, e.g. ['import_id' => 7, 'source_row' => 42]
+     * from ImportBooksChunk. Transient like $movementReason; reset by the observer.
+     *
+     * @var array<string, int>
+     */
+    public array $movementSource = [];
+
     // Legacy syntax (Laravel <= 12), equivalent to the #[Table] attribute above.
     // Pivot sets $incrementing = false by default; without true, the id generated
     // on insert is not set on the model.

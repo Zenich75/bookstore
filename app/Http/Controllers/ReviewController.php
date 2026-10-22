@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ReviewCreated;
+use App\Events\ReviewDeleted;
 use App\Http\Requests\StoreReviewRequest;
 use App\Http\Requests\UpdateReviewRequest;
 use App\Models\Book;
@@ -43,8 +45,10 @@ class ReviewController extends Controller
                 ->redirectTo(route('books.show', $book).'#review-form');
         }
 
-        // TODO(stage 9): fire ReviewCreated here (notify moderators, recalculate the rating):
-        // ReviewCreated::dispatch($review);
+        // Listeners (app/Listeners) are queued: the reader does not wait for the
+        // moderator e-mails. ShouldDispatchAfterCommit on the event: if this ran inside
+        // a transaction that rolled back, no listener would run.
+        ReviewCreated::dispatch($review);
 
         return redirect()->to(route('books.show', $book).'#review-form')
             ->with('status', __('ui.reviews.flash.created'));
@@ -65,6 +69,7 @@ class ReviewController extends Controller
         Gate::authorize('delete', $review);
 
         $review->delete();
+        ReviewDeleted::dispatch($review->id, $review->book_id, $review->user_id, $review->is_approved);
 
         return $this->backToBook($review)->with('status', __('ui.reviews.flash.deleted'));
     }

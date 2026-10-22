@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ReviewApproved;
+use App\Events\ReviewRejected;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Scopes\ApprovedScope;
@@ -40,6 +42,7 @@ class ReviewController extends Controller implements HasMiddleware
     public function approve(Review $review): RedirectResponse
     {
         $review->update(['is_approved' => true]);
+        ReviewApproved::dispatch($review); // => RecalculateBookRating (queued)
 
         return back()->with('status', __('ui.admin.flash.review_approved'));
     }
@@ -50,6 +53,8 @@ class ReviewController extends Controller implements HasMiddleware
     public function destroy(Review $review): RedirectResponse
     {
         $review->delete();
+        // Ids, not the model: the row is gone before any queued listener runs.
+        ReviewRejected::dispatch($review->id, $review->book_id, $review->user_id, $review->is_approved);
 
         return back()->with('status', __('ui.admin.flash.review_rejected'));
     }

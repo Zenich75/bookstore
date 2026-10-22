@@ -74,6 +74,8 @@ test('sorting by price and rating (books without reviews last)', function () {
     Review::factory()->approved()->for($cheap)->create(['rating' => 5]);
     Review::factory()->approved()->for($pricey)->create(['rating' => 2]);
     Review::factory()->for($unrated)->create(['rating' => 5]); // not approved => no rating
+    // Factories fire no review events: fill books.rating_avg as the seeder does.
+    $this->artisan('books:recalculate-ratings', ['--sync' => true])->assertSuccessful();
 
     expect(catalogTitles('/books?sort=price_asc'))->toBe(['Cheap', 'Unrated', 'Pricey'])
         ->and(catalogTitles('/books?sort=price_desc'))->toBe(['Pricey', 'Unrated', 'Cheap'])

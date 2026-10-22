@@ -30,4 +30,12 @@ return [
         'adjustment' => 'Adjustment',
         'import' => 'Import',
     ],
+    'import_status' => [
+        'pending' => 'Queued',
+        'validating' => 'Checking the file',
+        'processing' => 'Processing',
+        'completed' => 'Completed',
+        'completed_with_errors' => 'Completed with errors',
+        'failed' => 'Failed',
+    ],
 ];

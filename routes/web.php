@@ -9,9 +9,11 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Lab\LabCollectionsController;
 use App\Http\Controllers\Lab\LabModelsController;
 use App\Http\Controllers\Lab\LabNPlusOneController;
+use App\Http\Controllers\Lab\LabQueuesController;
 use App\Http\Controllers\Lab\LabRelationsController;
 use App\Http\Controllers\Lab\LabXssController;
 use App\Http\Controllers\Manage;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Models\Review;
@@ -122,6 +124,13 @@ Route::prefix('manage')->name('manage.')->middleware(['auth', 'verified', 'role:
     });
 });
 
+// Staff notifications (database channel): bell in the layout, list, mark as read.
+Route::prefix('notifications')->name('notifications.')->middleware(['auth', 'verified', 'role:manager,admin'])->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
+    Route::post('/{id}/read', [NotificationController::class, 'read'])->name('read');
+});
+
 // Reports: invokable controller, the report name comes from ->defaults().
 // A gate (view-reports) rather than role:manager,admin: the rule lives in one place
 // and the same check drives the navigation link (@can('view-reports')).
@@ -145,6 +154,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::patch('/books/{book}/restore', [Admin\BookController::class, 'restore'])->name('books.restore')->withTrashed();
     Route::delete('/books/{book}/force', [Admin\BookController::class, 'forceDelete'])->name('books.force-delete')->withTrashed();
 
+    // CSV import: upload, progress page + JSON for polling, error report.
+    Route::get('/imports', [Admin\ImportController::class, 'index'])->name('imports.index');
+    Route::post('/imports', [Admin\ImportController::class, 'store'])->name('imports.store');
+    Route::get('/imports/{import}', [Admin\ImportController::class, 'show'])->name('imports.show');
+    Route::get('/imports/{import}/progress', [Admin\ImportController::class, 'progress'])->name('imports.progress');
+    Route::get('/imports/{import}/errors.csv', [Admin\ImportController::class, 'errors'])->name('imports.errors');
+
     Route::get('/reviews', [Admin\ReviewController::class, 'index'])->name('reviews.index');
     Route::patch('/reviews/{review}/approve', [Admin\ReviewController::class, 'approve'])->name('reviews.approve');
     Route::delete('/reviews/{review}', [Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
@@ -157,6 +173,9 @@ Route::prefix('lab')->name('lab.')->middleware('lab')->group(function () {
     Route::get('/collections', LabCollectionsController::class)->name('collections');
     Route::get('/models', LabModelsController::class)->name('models');
     Route::get('/xss', LabXssController::class)->name('xss');
+    Route::get('/queues', [LabQueuesController::class, 'index'])->name('queues');
+    Route::post('/queues/failed/{action}', [LabQueuesController::class, 'failed'])->name('queues.failed');
+    Route::post('/queues/{variant}', [LabQueuesController::class, 'dispatch'])->name('queues.dispatch');
 });
 
 // Any unmatched URL => our custom 404 page (instead of the framework's default).

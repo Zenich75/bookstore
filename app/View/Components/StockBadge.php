@@ -13,8 +13,6 @@ use Illuminate\View\Component;
  */
 class StockBadge extends Component
 {
-    public const LOW_STOCK_THRESHOLD = 5;
-
     public function __construct(
         public int $quantity,
         public int $reserved = 0,
@@ -32,7 +30,7 @@ class StockBadge extends Component
     {
         return match (true) {
             $this->available() === 0 => 'out',
-            $this->available() < self::LOW_STOCK_THRESHOLD => 'low',
+            $this->available() < config('warehouse.low_stock_threshold') => 'low',
             default => 'in',
         };
     }

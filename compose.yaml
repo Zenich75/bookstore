@@ -24,6 +24,37 @@ services:
         depends_on:
             - mysql
             - mailpit
+    # Queue worker: same image and code as the app. Polls the queues in priority order.
+    # After changing PHP code: `sail artisan queue:restart` (workers keep the old code
+    # in memory until they restart; Docker restarts the container when it exits).
+    queue:
+        image: 'sail-8.5/app'
+        command: ['php', 'artisan', 'queue:work', '--queue=ratings,imports,notifications,default', '--tries=3', '--max-time=3600']
+        restart: unless-stopped
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - mailpit
+    # Scheduler: runs routes/console.php schedules every minute (instead of cron).
+    scheduler:
+        image: 'sail-8.5/app'
+        command: ['php', 'artisan', 'schedule:work']
+        restart: unless-stopped
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - mysql
     mysql:
         image: 'mysql:8.4'
         ports:

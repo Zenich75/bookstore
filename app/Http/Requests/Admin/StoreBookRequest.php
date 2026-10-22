@@ -44,12 +44,44 @@ class StoreBookRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            // "978-617-0000-01-9" / "978 617 0000019" => "9786170000019"
-            'isbn' => preg_replace('/\D+/', '', (string) $this->input('isbn')),
-            // "1 299,90" => "1299.90" — still a string: no float ever touches money.
-            'price' => str_replace([' ', "\u{A0}", ','], ['', '', '.'], trim((string) $this->input('price'))),
+            'isbn' => self::normalizeIsbn($this->input('isbn')),
+            'price' => self::normalizePrice($this->input('price')),
             'slug' => $this->filled('slug') ? Str::slug((string) $this->input('slug'), '-', 'uk') : null,
         ]);
+    }
+
+    /**
+     * "978-617-0000-01-9" / "978 617 0000019" => "9786170000019"
+     */
+    public static function normalizeIsbn(mixed $isbn): string
+    {
+        return preg_replace('/\D+/', '', (string) $isbn);
+    }
+
+    /**
+     * "1 299,90" => "1299.90" — still a string: no float ever touches money.
+     */
+    public static function normalizePrice(mixed $price): string
+    {
+        return str_replace([' ', "\u{A0}", ','], ['', '', '.'], trim((string) $price));
+    }
+
+    /**
+     * Rules for the book's own columns, shared with the CSV import (ImportBooksChunk),
+     * which has no form, no current book and upserts by ISBN instead of rejecting it.
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function bookFieldRules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'isbn' => ['bail', 'required', 'string', new ValidIsbn13],
+            'price' => ['required', 'string', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
+            'format' => ['required', Rule::enum(BookFormat::class)],
+            // books.published_at is a TIMESTAMP column: 1970-01-01 .. 2038-01-19 only.
+            'published_at' => ['nullable', 'date', 'after:1970-01-01', 'before:2038-01-19'],
+        ];
     }
 
     /**
@@ -57,20 +89,18 @@ class StoreBookRequest extends FormRequest
      */
     public function rules(): array
     {
+        $fields = self::bookFieldRules();
+
         return [
-            'title' => ['required', 'string', 'max:255'],
+            ...$fields,
             // Optional on create (HasSlug generates it from the title).
             // Rule::unique() has no soft-delete filter by default, so trashed books count
             // too — as they must: the DB unique index covers them. Adding ->withoutTrashed()
             // would let a duplicate pass validation and fail on INSERT with a 500.
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('books', 'slug')->ignore($this->book())],
-            // bail: no uniqueness query for a value that is not even an ISBN.
-            'isbn' => ['bail', 'required', 'string', new ValidIsbn13, Rule::unique('books', 'isbn')->ignore($this->book())],
-            'price' => ['required', 'string', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
-            'format' => ['required', Rule::enum(BookFormat::class)],
+            // bail (in bookFieldRules()): no uniqueness query for a value that is not even an ISBN.
+            'isbn' => [...$fields['isbn'], Rule::unique('books', 'isbn')->ignore($this->book())],
             'genre_id' => ['required', 'integer', Rule::exists('genres', 'id')],
-            // books.published_at is a TIMESTAMP column: 1970-01-01 .. 2038-01-19 only.
-            'published_at' => ['nullable', 'date', 'after:1970-01-01', 'before:2038-01-19'],
             // Array rules: "authors" itself, then every row via the * wildcard.
             'authors' => ['array', 'max:10'],
             // nullable: an empty row is skipped (null => no other rule runs for it);

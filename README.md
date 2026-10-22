@@ -18,7 +18,6 @@ composer install
 ./vendor/bin/sail up -d
 ./vendor/bin/sail artisan key:generate
 ./vendor/bin/sail artisan migrate --seed
-./vendor/bin/sail artisan queue:work      # in a separate terminal
 npm install && npm run build              # Tailwind assets (or `npm run dev`)
 ```
 
@@ -51,6 +50,8 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | Лабораторія колекцій | <http://localhost/lab/collections> |
 | Лабораторія моделей | <http://localhost/lab/models> |
 | Лабораторія XSS | <http://localhost/lab/xss> |
+| Лабораторія черг | <http://localhost/lab/queues> |
+| Імпорт CSV (адмін) | <http://localhost/admin/imports> |
 | Склади (менеджер/адмін) | <http://localhost/manage/warehouses> |
 | Адмінка | <http://localhost/admin> |
 | Звіти (менеджер/адмін) | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
@@ -61,11 +62,17 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 ```bash
 ./vendor/bin/sail artisan test   # Pest test suite
 ./vendor/bin/sail pint           # code style
+./vendor/bin/sail artisan queue:restart   # after PHP changes: workers reload the code
+./vendor/bin/sail artisan import:make-sample --rows=5000 --errors=5   # CSV for /admin/imports
 ./vendor/bin/sail down           # stop containers
 ```
 
 `MODEL_STRICT` (за замовчуванням `true`) вмикає суворий режим Eloquent — див.
 [docs/00-setup.md](docs/00-setup.md).
+
+Черга й планувальник працюють як сервіси Sail `queue` (`queue:work --queue=ratings,imports,notifications,default`)
+і `scheduler` (`schedule:work`). Обробник тримає код у пам’яті: **після змін PHP-коду виконайте
+`sail artisan queue:restart`**. Див. [docs/09-queues.md](docs/09-queues.md).
 
 ## Мова інтерфейсу
 
@@ -95,7 +102,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | 6 | Аксесори й мутатори, касти (`Money`, `encrypted`), серіалізація, локальні й глобальні скоупи, події та спостерігачі, масове присвоєння, `/lab/models` | [docs/06-attributes-casts.md](docs/06-attributes-casts.md) |
 | 7 | Автентифікація без стартових наборів, підтвердження пошти, middleware (до/після/термінальне), гейти й політики, `Gate::before`, IDOR і scoped bindings, обмеження частоти, адмінка й керування залишками | [docs/07-middleware-auth.md](docs/07-middleware-auth.md) |
 | 8 | Form Request (життєвий цикл, `authorize()` через політики, `Rule::enum/exists/unique`, масиви, умовні правила, власне правило й замикання, `after()`, іменовані сумки помилок), компоненти форм, відгуки з модерацією, `/lab/xss` | [docs/08-forms-validation.md](docs/08-forms-validation.md) |
-| 9 | _буде згодом_ | |
+| 9 | Черги (`database`), `Queue::route()`, задачі й повтори, унікальні задачі, події й слухачі, `afterCommit`, ланцюжки й пакети (імпорт CSV), middleware задач, сповіщення (mail + database), планувальник і `Prunable`, `/lab/queues` | [docs/09-queues.md](docs/09-queues.md) |
 | 10 | _буде згодом_ | |
 
 Нові уроки починайте з шаблону [docs/_template.md](docs/_template.md).

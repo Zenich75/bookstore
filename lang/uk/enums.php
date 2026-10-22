@@ -30,4 +30,12 @@ return [
         'adjustment' => 'Коригування',
         'import' => 'Імпорт',
     ],
+    'import_status' => [
+        'pending' => 'У черзі',
+        'validating' => 'Перевірка файлу',
+        'processing' => 'Обробка',
+        'completed' => 'Завершено',
+        'completed_with_errors' => 'Завершено з помилками',
+        'failed' => 'Не вдалося',
+    ],
 ];

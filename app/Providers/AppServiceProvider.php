@@ -2,8 +2,16 @@
 
 namespace App\Providers;
 
+use App\Enums\QueueName;
 use App\Enums\UserRole;
 use App\Http\Middleware\LogSlowRequests;
+use App\Jobs\CheckLowStock;
+use App\Jobs\ImportBooksChunk;
+use App\Jobs\RecalculateBookRating;
+use App\Jobs\RecalculateBookRatings;
+use App\Jobs\SendImportReport;
+use App\Listeners\DispatchRatingRecalculation;
+use App\Listeners\NotifyModeratorsOfPendingReview;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Review;
@@ -14,9 +22,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\LazyLoadingViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Number;
@@ -75,6 +85,8 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'book' => Book::class,
             'author' => Author::class,
+            // notifications.notifiable_type (database notification channel).
+            'user' => User::class,
         ]);
 
         // Number::format()/fileSize() follow the app locale (uk: "1 234,5"). Carbon picks
@@ -86,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureAuthorization();
         $this->configureRateLimiting();
+        $this->configureQueues();
 
         // @role('manager', 'admin') ... @endrole in Blade.
         Blade::if('role', fn (string ...$roles) => in_array(auth()->user()?->role?->value, $roles, true));
@@ -128,5 +141,29 @@ class AppServiceProvider extends ServiceProvider
 
         // Review writes (create/edit/delete): 5 per minute per user; over the limit => 429.
         RateLimiter::for('reviews', fn (Request $request) => Limit::perMinute(5)->by($request->user()?->id ?: $request->ip()));
+    }
+
+    /**
+     * Job => queue map in one place (Laravel 13 Queue::route()). Used for jobs, queued
+     * listeners and queued notifications when they do not name a queue themselves:
+     * a #[Queue] attribute or ->onQueue() wins (see ValidateImportFile).
+     * A parent class or interface works as a key: Notification::class covers every
+     * queued notification.
+     *
+     * Worker: queue:work --queue=ratings,imports,notifications,default — polls the
+     * queues in that order (priority), see compose.yaml.
+     */
+    private function configureQueues(): void
+    {
+        Queue::route([
+            RecalculateBookRating::class => QueueName::Ratings,
+            RecalculateBookRatings::class => QueueName::Ratings,
+            DispatchRatingRecalculation::class => QueueName::Ratings,
+            ImportBooksChunk::class => QueueName::Imports,
+            NotifyModeratorsOfPendingReview::class => QueueName::Notifications,
+            SendImportReport::class => QueueName::Notifications,
+            Notification::class => QueueName::Notifications,
+            CheckLowStock::class => QueueName::Default,
+        ]);
     }
 }

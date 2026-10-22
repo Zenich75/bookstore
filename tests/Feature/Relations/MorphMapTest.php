@@ -2,6 +2,7 @@
 
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\Genre;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\ClassMorphViolationException;
@@ -20,5 +21,6 @@ test('enforced morph map stores aliases instead of class names', function () {
 });
 
 test('a model without an alias cannot be used polymorphically', function () {
-    (new User)->getMorphClass();
+    // User got an alias in stage 9 (notifications.notifiable_type); Genre has none.
+    (new Genre)->getMorphClass();
 })->throws(ClassMorphViolationException::class);

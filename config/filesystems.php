@@ -30,6 +30,13 @@ return [
 
     'disks' => [
 
+        // Uploaded CSV imports (storage/app/imports), read by the queue workers.
+        'imports' => [
+            'driver' => 'local',
+            'root' => storage_path('app/imports'),
+            'throw' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

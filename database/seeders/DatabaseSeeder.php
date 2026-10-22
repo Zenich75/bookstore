@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Database\Seeders\Support\SeedScale;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
@@ -37,5 +38,10 @@ class DatabaseSeeder extends Seeder
             TagSeeder::class,
             ReviewSeeder::class,
         ]);
+
+        // Reviews were bulk-inserted (no events, no jobs): fill books.rating_avg now,
+        // in this process, so the catalog's "by rating" sort works right after seeding.
+        Artisan::call('books:recalculate-ratings', ['--sync' => true]);
+        $this->command?->info(trim(Artisan::output()));
     }
 }

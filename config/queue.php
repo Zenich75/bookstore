@@ -40,8 +40,12 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+            // Must exceed the longest job #[Timeout] (ImportBooksChunk: 120 s), otherwise a
+            // still-running job is handed to a second worker.
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 180),
+            // Jobs dispatched inside a DB transaction are pushed only after COMMIT (and
+            // dropped on ROLLBACK): a worker never sees rows that are not committed yet.
+            'after_commit' => true,
         ],
 
         'beanstalkd' => [

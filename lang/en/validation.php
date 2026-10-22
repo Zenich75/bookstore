@@ -212,6 +212,7 @@ return [
         'authors.*.role' => 'author role',
         'authors.*.sort_order' => 'author order',
         'body' => 'review text',
+        'genre' => 'genre',
         'genre_id' => 'main genre',
         'genres' => 'secondary genres',
         'genres.*' => 'secondary genre',

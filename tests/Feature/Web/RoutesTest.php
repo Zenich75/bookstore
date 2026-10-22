@@ -3,6 +3,7 @@
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\Import;
 use App\Models\Warehouse;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
@@ -33,8 +34,12 @@ function appRouteNames(): array
 }
 
 test('every named GET route resolves and returns 200 for an admin', function () {
-    asAdmin();
+    $admin = asAdmin();
     $stock = $this->warehouse->stocks()->first();
+    $import = Import::create([
+        'user_id' => $admin->id, 'warehouse_id' => $this->warehouse->id, 'original_name' => 'books.csv',
+        'path' => 'books.csv', 'status' => 'completed', 'total_rows' => 1, 'errors' => [2 => ['Помилка']],
+    ]);
 
     $params = [
         'books.show' => [$this->book],
@@ -43,6 +48,9 @@ test('every named GET route resolves and returns 200 for an admin', function () 
         'authors.books.show' => [$this->author, $this->book],
         'genres.show' => [$this->genre],
         'admin.books.show' => [$this->book],
+        'admin.imports.show' => [$import],
+        'admin.imports.progress' => [$import],
+        'admin.imports.errors' => [$import],
         'admin.books.edit' => [$this->book],
         'manage.warehouses.stocks.index' => [$this->warehouse],
         'manage.warehouses.movements.index' => [$this->warehouse],
@@ -62,7 +70,7 @@ test('every named GET route resolves and returns 200 for an admin', function () 
     expect($tested)->toContain('home', 'books.index', 'books.show', 'authors.index', 'authors.show',
         'authors.books.show', 'genres.index', 'genres.show', 'about', 'admin.dashboard', 'admin.books.index',
         'admin.books.create', 'admin.books.edit', 'admin.reviews.index', 'manage.warehouses.index',
-        'manage.warehouses.stocks.edit', 'reports.stock', 'lab.relations', 'lab.xss', 'books.reviews.create');
+        'manage.warehouses.stocks.edit', 'reports.stock', 'lab.relations', 'lab.xss', 'books.reviews.create', 'lab.queues', 'admin.imports.index', 'admin.imports.show', 'notifications.index');
 });
 
 test('guest-only pages render for guests', function (string $name) {

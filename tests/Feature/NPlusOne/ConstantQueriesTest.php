@@ -5,11 +5,13 @@ use App\Enums\ImageType;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\Import;
 use App\Models\Profile;
 use App\Models\Review;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Notifications\LowStockNotification;
 
 /**
  * $count catalog books, each with 2 authors, 2 approved reviews, a cover,
@@ -137,6 +139,29 @@ test('admin: book list (with trashed) and pending reviews', function () {
     expectConstantQueries(
         fn (int $n) => Review::factory()->count($n)->create(), // pending by default
         fn () => $this->get(route('admin.reviews.index')),
+    );
+});
+
+test('staff notifications page (and the bell in the layout)', function () {
+    $manager = asManager();
+
+    expectConstantQueries(
+        fn (int $n) => collect(range(1, $n))->each(fn (int $i) => $manager->notify(
+            new LowStockNotification(1, "Склад {$i}", [], $i, 5),
+        )),
+        fn () => $this->get(route('notifications.index')),
+    );
+});
+
+test('admin imports list', function () {
+    $admin = asAdmin();
+
+    expectConstantQueries(
+        fn (int $n) => collect(range(1, $n))->each(fn () => Import::create([
+            'user_id' => $admin->id, 'warehouse_id' => Warehouse::factory()->create()->id, 'original_name' => 'a.csv',
+            'path' => 'a.csv', 'status' => 'completed', 'total_rows' => 1,
+        ])),
+        fn () => $this->get(route('admin.imports.index')),
     );
 });
 

@@ -41,7 +41,7 @@ test('pages render in Ukrainian without untranslated keys', function () {
         route('admin.dashboard'), route('admin.books.index'), route('admin.books.create'), route('admin.books.show', $book),
         route('admin.books.edit', $book), route('admin.reviews.index'),
         route('lab.relations'), route('lab.n-plus-one'), route('lab.n-plus-one', ['variant' => 'strict']),
-        route('lab.collections'), route('lab.models'), route('lab.xss'), route('reports.stock'), route('reports.top-authors'), '/no-such-page',
+        route('lab.collections'), route('lab.models'), route('lab.xss'), route('lab.queues'), route('admin.imports.index'), route('notifications.index'), route('reports.stock'), route('reports.top-authors'), '/no-such-page',
     ];
 
     $unverified = User::factory()->unverified()->create();
@@ -58,7 +58,7 @@ test('pages render in Ukrainian without untranslated keys', function () {
 
         expect($html)
             ->toContain('<html lang="uk">')
-            ->not->toMatch('/\b(ui|lab|reports|enums)\.[a-z_]+\.[a-z_]+/', "Untranslated key on {$url}");
+            ->not->toMatch('/\b(ui|lab|reports|enums|mail)\.[a-z_]+\.[a-z_]+/', "Untranslated key on {$url}");
     }
 });
 
@@ -99,7 +99,7 @@ test('en and uk lang files define the same keys', function (string $file) {
     $keys = fn (string $locale) => array_keys(Arr::dot(require lang_path("{$locale}/{$file}.php")));
 
     expect($keys('uk'))->toBe($keys('en'));
-})->with(['ui', 'lab', 'reports', 'enums']);
+})->with(['ui', 'lab', 'reports', 'enums', 'mail']);
 
 test('prices are shown in hryvnias', function () {
     $book = Book::factory()->create(['price' => 123450]);

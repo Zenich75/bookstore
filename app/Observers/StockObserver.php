@@ -32,8 +32,10 @@ class StockObserver
 
     private function record(Stock $stock, int $delta, StockMovementReason $reason): void
     {
-        // The reason is per operation, not per model: reset it for the next save.
+        // Reason and source are per operation, not per model: reset them for the next save.
+        $source = $stock->movementSource;
         $stock->movementReason = null;
+        $stock->movementSource = [];
 
         if ($delta === 0) {
             return;
@@ -45,6 +47,7 @@ class StockObserver
             'user_id' => auth()->id(),
             'delta' => $delta,
             'reason' => $reason,
+            ...$source,
         ]);
     }
 }

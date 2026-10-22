@@ -212,8 +212,7 @@ class Book extends Model
     }
 
     /**
-     * Catalog sort orders; unknown keys fall back to "newest". "rating" needs the
-     * reviews_avg_rating column from withAvg() (see withCardData()).
+     * Catalog sort orders; unknown keys fall back to "newest".
      *
      * @param  Builder<self>  $query
      */
@@ -223,9 +222,11 @@ class Book extends Model
         match ($key) {
             'price_asc' => $query->orderBy('price'),
             'price_desc' => $query->orderByDesc('price'),
-            // Average of approved reviews; books without reviews go last.
-            // (books.rating_avg is filled by a queued job in a later stage.)
-            'rating' => $query->orderByRaw('reviews_avg_rating is null')->orderByDesc('reviews_avg_rating'),
+            // books.rating_avg: average of approved reviews, kept up to date by the queued
+            // RecalculateBookRating job (stage 9). Sorting by a stored, indexable column
+            // instead of the withAvg() subquery for every book. Books without reviews last.
+            // Stage 5–8 version: ->orderByRaw('reviews_avg_rating is null')->orderByDesc('reviews_avg_rating')
+            'rating' => $query->orderByRaw('rating_avg is null')->orderByDesc('rating_avg'),
             default => $query->orderByRaw('published_at is null')->orderByDesc('published_at'),
         };
     }

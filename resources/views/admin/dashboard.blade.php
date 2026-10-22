@@ -3,7 +3,8 @@
         <x-card>
             <x-slot:header>{{ __('ui.admin.books_title') }}</x-slot:header>
             <a href="{{ route('admin.books.index') }}" class="text-amber-700 hover:underline">{{ __('ui.admin.all_books') }}</a> ·
-            <a href="{{ route('admin.books.create') }}" class="text-amber-700 hover:underline">{{ __('ui.admin.new_book') }}</a>
+            <a href="{{ route('admin.books.create') }}" class="text-amber-700 hover:underline">{{ __('ui.admin.new_book') }}</a> ·
+            <a href="{{ route('admin.imports.index') }}" class="text-amber-700 hover:underline">{{ __('ui.imports.title') }}</a>
         </x-card>
         <x-card>
             <x-slot:header>{{ __('ui.admin.reviews_title') }}</x-slot:header>
