@@ -82,6 +82,8 @@
                 @endforeach
             </div>
 
+            @include('books.partials.my-review')
+
             <section>
                 <h2 class="mb-3 text-lg font-semibold">{{ __('ui.book.reviews_heading', ['count' => $reviews->total()]) }}</h2>
                 <div class="space-y-3">
@@ -91,8 +93,11 @@
                                 <span class="font-medium">{{ $review->user->name }}</span>
                                 <x-rating-stars :rating="$review->rating" />
                             </div>
-                            {{-- {{ }} escapes HTML: review bodies are user input. --}}
-                            <p class="mt-2 text-sm text-stone-700">{{ $review->body }}</p>
+                            {{-- Escape first, then add <br>: e() turns every < > " ' & of the user's text into
+                                 entities, so the only tags in the output are the <br>s nl2br() adds. The other
+                                 order, {!! nl2br($review->body) !!}, prints the user's own tags as HTML (XSS):
+                                 see /lab/xss. --}}
+                            <p class="mt-2 text-sm text-stone-700">{!! nl2br(e($review->body)) !!}</p>
                         </x-card>
                     @empty
                         <p class="text-sm text-stone-500">{{ __('ui.book.no_approved_reviews') }}</p>

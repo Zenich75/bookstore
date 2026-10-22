@@ -72,6 +72,27 @@ test('book page (books.show) with many authors, reviews, tags, genres and wareho
     );
 });
 
+test('book page with the review form (reader without a review) and with a pending own review', function () {
+    $seed = function (int $n) {
+        $book = Book::factory()->withAuthors($n)->create();
+        User::factory()->count($n)->create()
+            ->each(fn (User $user) => Review::factory()->approved()->for($book)->for($user)->create());
+
+        return $book;
+    };
+
+    asReader();
+    expectConstantQueries($seed, fn (Book $book) => $this->get(route('books.show', $book))->assertSee('id="review-form"', false));
+
+    $author = asReader();
+    expectConstantQueries(function (int $n) use ($seed, $author) {
+        $book = $seed($n);
+        Review::factory()->for($book)->for($author)->create(); // pending
+
+        return $book;
+    }, fn (Book $book) => $this->get(route('books.show', $book))->assertSee(__('ui.reviews.status_pending')));
+});
+
 test('author page (authors.show) with books in every role', function () {
     expectConstantQueries(
         function (int $n) {

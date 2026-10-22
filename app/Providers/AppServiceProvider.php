@@ -121,15 +121,12 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiting(): void
     {
-        // 5 attempts per minute per email + IP: guessing one account's password from
-        // one address is throttled, without locking out everyone behind the same NAT.
-        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
-            ->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip())
-            ->response(fn (Request $request, array $headers) => back()
-                ->withInput($request->only('email', 'remember'))
-                ->withErrors(['email' => __('auth.throttle', ['seconds' => $headers['Retry-After'] ?? 60])])));
+        // Login throttling lives in App\Http\Requests\Auth\LoginRequest since stage 8
+        // (failed attempts only). Stage 7 version, for comparison:
+        // RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)
+        //     ->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()));
 
-        // Used by the review form in stage 8.
-        RateLimiter::for('reviews', fn (Request $request) => Limit::perHour(10)->by($request->user()?->id ?: $request->ip()));
+        // Review writes (create/edit/delete): 5 per minute per user; over the limit => 429.
+        RateLimiter::for('reviews', fn (Request $request) => Limit::perMinute(5)->by($request->user()?->id ?: $request->ip()));
     }
 }

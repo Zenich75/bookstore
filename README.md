@@ -50,6 +50,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | Лабораторія N+1 | <http://localhost/lab/n-plus-one> |
 | Лабораторія колекцій | <http://localhost/lab/collections> |
 | Лабораторія моделей | <http://localhost/lab/models> |
+| Лабораторія XSS | <http://localhost/lab/xss> |
 | Склади (менеджер/адмін) | <http://localhost/manage/warehouses> |
 | Адмінка | <http://localhost/admin> |
 | Звіти (менеджер/адмін) | <http://localhost/reports/stock>, <http://localhost/reports/top-authors>, `/reports/stock.csv` |
@@ -93,7 +94,7 @@ docker compose exec -e SEED_SCALE=full laravel.test php artisan migrate:fresh --
 | 5 | Колекції проти Query Builder, chunk/lazy/cursor, звіти, потокове CSV | [docs/05-collections.md](docs/05-collections.md) |
 | 6 | Аксесори й мутатори, касти (`Money`, `encrypted`), серіалізація, локальні й глобальні скоупи, події та спостерігачі, масове присвоєння, `/lab/models` | [docs/06-attributes-casts.md](docs/06-attributes-casts.md) |
 | 7 | Автентифікація без стартових наборів, підтвердження пошти, middleware (до/після/термінальне), гейти й політики, `Gate::before`, IDOR і scoped bindings, обмеження частоти, адмінка й керування залишками | [docs/07-middleware-auth.md](docs/07-middleware-auth.md) |
-| 8 | _буде згодом_ | |
+| 8 | Form Request (життєвий цикл, `authorize()` через політики, `Rule::enum/exists/unique`, масиви, умовні правила, власне правило й замикання, `after()`, іменовані сумки помилок), компоненти форм, відгуки з модерацією, `/lab/xss` | [docs/08-forms-validation.md](docs/08-forms-validation.md) |
 | 9 | _буде згодом_ | |
 | 10 | _буде згодом_ | |
 

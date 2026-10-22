@@ -49,6 +49,7 @@
                     <a href="{{ route('lab.n-plus-one') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_n_plus_one') }}</a>
                     <a href="{{ route('lab.collections') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_collections') }}</a>
                     <a href="{{ route('lab.models') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_models') }}</a>
+                    <a href="{{ route('lab.xss') }}" class="hover:text-amber-700">{{ __('ui.nav.lab_xss') }}</a>
                 @endif
 
                 @auth
@@ -76,14 +77,15 @@
         @endunless
     @endauth
 
-    {{-- Flash area: messages put into the session with ->with('status', '...'). --}}
-    @if (session('status'))
+    {{-- Flash area: messages put into the session with ->with('status', '...').
+         @session: renders only when the key exists and exposes it as $value. --}}
+    @session('status')
         <div class="mx-auto mt-4 max-w-7xl px-4">
-            <div class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-                {{ session('status') }}
+            <div class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800" role="status">
+                {{ $value }}
             </div>
         </div>
-    @endif
+    @endsession
 
     <main class="mx-auto max-w-7xl px-4 py-6">
         @if ($title)

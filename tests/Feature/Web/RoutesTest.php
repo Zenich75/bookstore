@@ -38,6 +38,7 @@ test('every named GET route resolves and returns 200 for an admin', function () 
 
     $params = [
         'books.show' => [$this->book],
+        'books.reviews.create' => [$this->book], // redirects to the book page's review form
         'authors.show' => [$this->author],
         'authors.books.show' => [$this->author, $this->book],
         'genres.show' => [$this->genre],
@@ -61,7 +62,7 @@ test('every named GET route resolves and returns 200 for an admin', function () 
     expect($tested)->toContain('home', 'books.index', 'books.show', 'authors.index', 'authors.show',
         'authors.books.show', 'genres.index', 'genres.show', 'about', 'admin.dashboard', 'admin.books.index',
         'admin.books.create', 'admin.books.edit', 'admin.reviews.index', 'manage.warehouses.index',
-        'manage.warehouses.stocks.edit', 'reports.stock', 'lab.relations');
+        'manage.warehouses.stocks.edit', 'reports.stock', 'lab.relations', 'lab.xss', 'books.reviews.create');
 });
 
 test('guest-only pages render for guests', function (string $name) {

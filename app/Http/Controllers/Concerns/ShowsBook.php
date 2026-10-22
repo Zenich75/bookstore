@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Models\Author;
 use App\Models\Book;
+use App\Models\Review;
+use App\Models\Scopes\ApprovedScope;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -34,6 +36,14 @@ trait ShowsBook
             ->paginate(10)
             ->withQueryString();
 
-        return view('books.show', compact('book', 'reviews', 'viaAuthor'));
+        // The visitor's own review, pending included: the global scope is bypassed, but
+        // only together with user_id = the visitor — nobody else sees a pending review.
+        $user = $request->user();
+        $myReview = $user
+            ? Review::withoutGlobalScope(ApprovedScope::class)->whereBelongsTo($user)->whereBelongsTo($book)->first()
+            : null;
+        $canReview = (bool) $user?->can('create', [Review::class, $book]);
+
+        return view('books.show', compact('book', 'reviews', 'viaAuthor', 'myReview', 'canReview'));
     }
 }

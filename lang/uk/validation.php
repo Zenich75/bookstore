@@ -158,6 +158,24 @@ return [
     'uppercase' => 'Поле :attribute має бути рядком у верхньому регістрі.',
     'url' => 'Формат поля :attribute хибний.',
     'uuid' => 'Поле :attribute має бути коректним UUID ідентифікатором.',
+    /*
+    | Bookstore (stage 8). Note: `php artisan lang:update` (laravel-lang) may
+    | overwrite this file — re-apply the lines marked "bookstore" afterwards.
+    */
+    // bookstore: custom rules (ValidIsbn13, closure rule, after() hook)
+    'isbn13' => 'Поле :attribute має містити 13 цифр ISBN (дефіси й пробіли дозволені).',
+    'isbn13_checksum' => 'Поле :attribute містить ISBN із хибною контрольною цифрою.',
+    'no_links' => 'Поле :attribute не може містити посилань.',
+    'reserved_exceeds_quantity' => 'Резерв не може перевищувати кількість.',
+    // bookstore: per-attribute messages ("attribute.rule")
+    'custom' => [
+        'shelf_code' => [
+            'required' => 'Вкажіть код полиці: на складі є примірники.',
+        ],
+        'authors.*.id' => [
+            'distinct' => 'Цього автора вже вибрано в іншому рядку.',
+        ],
+    ],
     'attributes' => [
         'address' => 'адреса',
         'affiliate_url' => 'афілійована URL-адреса',
@@ -169,7 +187,7 @@ return [
         'audience_winner' => 'audience winner',
         'available' => 'доступно',
         'birthday' => 'день народження',
-        'body' => 'тіло',
+        'body' => 'текст відгуку',
         'city' => 'місто',
         'color' => 'color',
         'company' => 'company',
@@ -194,7 +212,7 @@ return [
         'display_type' => 'тип відображення',
         'district' => 'район',
         'duration' => 'тривалість',
-        'email' => 'e-mail',
+        'email' => 'електронна пошта',
         'excerpt' => 'уривок',
         'filter' => 'фільтр',
         'finished_at' => 'закінчив о',
@@ -260,7 +278,7 @@ return [
         'short_text' => 'короткий текст',
         'size' => 'розмір',
         'skills' => 'навички',
-        'slug' => 'URL-адрес',
+        'slug' => 'слаг',
         'specialization' => 'спеціалізація',
         'started_at' => 'розпочато о',
         'state' => 'стан',
@@ -286,5 +304,20 @@ return [
         'winner' => 'winner',
         'work' => 'work',
         'year' => 'рік',
+        // bookstore
+        'authors' => 'автори',
+        'authors.*.id' => 'автор',
+        'authors.*.role' => 'роль автора',
+        'authors.*.sort_order' => 'порядок автора',
+        'format' => 'формат',
+        'genre_id' => 'основний жанр',
+        'genres' => 'додаткові жанри',
+        'genres.*' => 'додатковий жанр',
+        'isbn' => 'ISBN',
+        'published_at' => 'дата виходу',
+        'rating' => 'оцінка',
+        'reserved' => 'резерв',
+        'shelf_code' => 'код полиці',
+        'tags.*' => 'тег',
     ],
 ];

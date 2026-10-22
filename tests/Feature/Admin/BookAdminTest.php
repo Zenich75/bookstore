@@ -21,7 +21,7 @@ function bookPayload(array $overrides = []): array
 
     return [
         'title' => 'Лісова пісня',
-        'isbn' => '978-617-0000-01-7',
+        'isbn' => '978-617-0000-01-9',
         'price' => '249,50',
         'format' => 'hardcover',
         'genre_id' => $test->genre->id,
@@ -58,7 +58,7 @@ test('store: book with Money price, ISBN digits, slug, authors with pivot roles,
     $book = Book::with(['authors', 'genres', 'tags'])->sole();
 
     expect($book->price->cents)->toBe(24950)
-        ->and($book->isbn)->toBe('9786170000017')
+        ->and($book->isbn)->toBe('9786170000019')
         ->and($book->slug)->toBe('lisova-pisnia')
         ->and($book->published_year)->toBe(2011)
         ->and($book->authors->map(fn (Author $a) => [$a->id, $a->credit->role, $a->credit->sort_order])->all())
@@ -69,7 +69,7 @@ test('store: book with Money price, ISBN digits, slug, authors with pivot roles,
 
 test('validation: duplicate ISBN (with dashes), bad price, unknown author, date outside TIMESTAMP range', function () {
     asAdmin();
-    Book::factory()->create(['isbn' => '9786170000017']);
+    Book::factory()->create(['isbn' => '9786170000019']);
 
     $this->post(route('admin.books.store'), bookPayload([
         'price' => '12.345', 'published_at' => '1911-01-01', 'authors' => [['id' => 999999, 'role' => 'author']],

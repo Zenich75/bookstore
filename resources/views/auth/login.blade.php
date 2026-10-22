@@ -2,12 +2,9 @@
     <x-card class="max-w-md">
         <form method="POST" action="{{ route('login') }}" class="space-y-4">
             @csrf
-            <x-field :label="__('ui.auth.email')" name="email">
-                <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="form-input">
-            </x-field>
-            <x-field :label="__('ui.auth.password')" name="password">
-                <input type="password" name="password" required autocomplete="current-password" class="form-input">
-            </x-field>
+            <x-form.input type="email" name="email" :label="__('ui.auth.email')" required autofocus autocomplete="username" />
+            {{-- type="password": never refilled from old() --}}
+            <x-form.input type="password" name="password" :label="__('ui.auth.password')" required autocomplete="current-password" />
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="remember" value="1" @checked(old('remember'))> {{ __('ui.auth.remember') }}
             </label>

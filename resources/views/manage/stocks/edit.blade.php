@@ -8,24 +8,12 @@
             @csrf
             @method('PUT')
             <div class="grid grid-cols-2 gap-4">
-                <x-field :label="__('ui.warehouses.columns.quantity')" name="quantity">
-                    <input type="number" name="quantity" min="0" value="{{ old('quantity', $stock->quantity) }}" required class="form-input">
-                </x-field>
-                <x-field :label="__('ui.warehouses.columns.reserved')" name="reserved">
-                    <input type="number" name="reserved" min="0" value="{{ old('reserved', $stock->reserved) }}" required class="form-input">
-                </x-field>
+                <x-form.input type="number" name="quantity" :label="__('ui.warehouses.columns.quantity')" :value="$stock->quantity" min="0" required />
+                <x-form.input type="number" name="reserved" :label="__('ui.warehouses.columns.reserved')" :value="$stock->reserved" min="0" required />
             </div>
-            <x-field :label="__('ui.warehouses.columns.shelf')" name="shelf_code">
-                <input type="text" name="shelf_code" maxlength="20" value="{{ old('shelf_code', $stock->shelf_code) }}" class="form-input">
-            </x-field>
+            <x-form.input name="shelf_code" :label="__('ui.warehouses.columns.shelf')" :value="$stock->shelf_code" maxlength="20" :hint="__('ui.manage.shelf_hint')" />
             {{-- Stored in Stock::$movementReason; StockObserver writes it to stock_movements. --}}
-            <x-field :label="__('ui.manage.reason')" name="reason">
-                <select name="reason" class="form-input">
-                    @foreach ($reasons as $reason)
-                        <option value="{{ $reason->value }}" @selected(old('reason', 'adjustment') === $reason->value)>{{ $reason->label() }}</option>
-                    @endforeach
-                </select>
-            </x-field>
+            <x-form.select name="reason" :label="__('ui.manage.reason')" :options="$reasons" value="adjustment" :hint="__('ui.manage.reason_hint')" />
             <button type="submit" class="btn">{{ __('ui.manage.save') }}</button>
         </form>
     </x-card>

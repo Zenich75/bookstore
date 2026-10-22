@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -17,22 +17,12 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * POST /login runs behind throttle:login (named limiter, AppServiceProvider).
+     * LoginRequest validates the input; authenticate() checks the credentials and
+     * throttles failed attempts (moved there from the stage 7 throttle:login middleware).
      */
-    public function store(Request $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        // Inline validation for now; moves to a Form Request in stage 8.
-        $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        // attempt(): finds the user by email, checks the hash, logs in. The second
-        // argument sets the long-lived "remember me" cookie.
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            // One message for "no such user" and "wrong password": do not reveal which emails exist.
-            throw ValidationException::withMessages(['email' => __('auth.failed')]);
-        }
+        $request->authenticate();
 
         // New session id after login: an id planted before login (session fixation) becomes useless.
         $request->session()->regenerate();

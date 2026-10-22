@@ -13,6 +13,7 @@ return [
         'lab_n_plus_one' => 'Lab: N+1',
         'lab_collections' => 'Lab: collections',
         'lab_models' => 'Lab: models',
+        'lab_xss' => 'Lab: XSS',
         'reports' => 'Reports',
         'admin' => 'Admin',
         'manage' => 'Warehouses',
@@ -153,7 +154,10 @@ return [
         'confirm_force_delete' => 'Delete the book permanently, with its stock, movements and reviews?',
         'read_only' => 'read only',
         'section_main' => 'Main',
-        'authors_hint' => 'Row order is the author order on the book page. Empty rows are ignored.',
+        'authors_hint' => 'Authors are shown by the order number (rows without one keep their position). Empty rows are ignored.',
+        'add_author' => '+ Add author',
+        'remove_author' => 'Remove row',
+        'slug_hint' => 'Leave empty to generate from the title. Changing it breaks existing links.',
         'cancel' => 'Cancel',
         'fields' => [
             'id' => 'ID',
@@ -170,6 +174,7 @@ return [
             'author' => 'Author',
             'role' => 'Role',
             'tags' => 'Tags',
+            'sort_order' => 'Order',
         ],
         'public_page' => 'Public page →',
         'flash' => [
@@ -190,6 +195,8 @@ return [
         'edit' => 'Edit',
         'edit_stock_title' => 'Stock: :title',
         'reason' => 'Reason',
+        'reason_hint' => 'Required when the quantity changes; it is recorded in the stock movements.',
+        'shelf_hint' => 'Required while there are copies in stock.',
         'save' => 'Save',
         'columns' => [
             'date' => 'Date',
@@ -225,12 +232,46 @@ return [
             'verification_sent' => 'A new verification email has been sent.',
         ],
     ],
+    'reviews' => [
+        'my_heading' => 'Your review',
+        'login_link' => 'Log in',
+        'login_prompt' => 'to write a review.',
+        'verify_prompt' => 'Confirm your email to write a review.',
+        'status_pending' => 'awaiting moderation',
+        'status_approved' => 'approved',
+        'rating' => 'Rating',
+        'body' => 'Review',
+        'body_hint' => 'From :min to :max characters. Links are not allowed.',
+        'submit' => 'Send review',
+        'moderation_note' => 'Reviews are published after moderation. Until then only you can see yours.',
+        'edit' => 'Edit review',
+        'delete' => 'Delete review',
+        'already_reviewed' => 'You have already reviewed this book.',
+        'flash' => [
+            'created' => 'Thank you! Your review is awaiting moderation.',
+            'updated' => 'Review updated.',
+            'deleted' => 'Review deleted.',
+        ],
+    ],
     'errors' => [
         'not_found' => [
             'title' => 'Page not found',
             'text' => 'We couldn\'t find that page.',
             'back' => 'Back to the catalog',
         ],
+        'page_expired' => [
+            'title' => 'Page expired',
+            'text' => 'The form was open for too long, or its security token is missing. Go back, reload the page and send the form again.',
+        ],
+        'unprocessable' => [
+            'title' => 'Data cannot be processed',
+            'text' => 'The request contains invalid data.',
+        ],
+        'too_many_requests' => [
+            'title' => 'Too many requests',
+            'text' => 'You are doing this too often. Wait a minute and try again.',
+        ],
+        'back_home' => 'Back to the home page',
     ],
     'about' => [
         'title' => 'About',

@@ -10,8 +10,10 @@ use App\Http\Controllers\Lab\LabCollectionsController;
 use App\Http\Controllers\Lab\LabModelsController;
 use App\Http\Controllers\Lab\LabNPlusOneController;
 use App\Http\Controllers\Lab\LabRelationsController;
+use App\Http\Controllers\Lab\LabXssController;
 use App\Http\Controllers\Manage;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReviewController;
 use App\Models\Review;
 use App\Models\Scopes\ApprovedScope;
 use Illuminate\Support\Facades\Route;
@@ -55,8 +57,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [Auth\RegisteredUserController::class, 'store']);
 
     Route::get('/login', [Auth\AuthenticatedSessionController::class, 'create'])->name('login');
-    // Named rate limiter "login" (AppServiceProvider): 5 attempts/min per email + IP.
-    Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store'])->middleware('throttle:login');
+    // Failed attempts are throttled inside LoginRequest (5/min per email + IP);
+    // stage 7 used route middleware here: ->middleware('throttle:login').
+    Route::post('/login', [Auth\AuthenticatedSessionController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
@@ -68,6 +71,29 @@ Route::middleware('auth')->group(function () {
         ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
     Route::post('/email/verification-notification', [Auth\EmailVerificationController::class, 'send'])
         ->middleware('throttle:6,1')->name('verification.send');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Reviews (readers)
+|--------------------------------------------------------------------------
+*/
+
+// Editing and moderation work on pending reviews, which ApprovedScope hides from
+// the default route model binding — resolve {review} without it. Who may touch
+// which review is up to ReviewPolicy (Form Request authorize() / Gate::authorize()).
+Route::bind('review', fn (string $value) => Review::withoutGlobalScope(ApprovedScope::class)->findOrFail($value));
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // GET target of the guest's login prompt: "auth" remembers it as the intended URL.
+    Route::get('/books/{book:slug}/reviews/create', [ReviewController::class, 'create'])->name('books.reviews.create');
+
+    // Named limiter "reviews" (AppServiceProvider): 5 writes per minute per user.
+    Route::middleware('throttle:reviews')->group(function () {
+        Route::post('/books/{book:slug}/reviews', [ReviewController::class, 'store'])->name('books.reviews.store');
+        Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
+        Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
+    });
 });
 
 /*
@@ -111,10 +137,6 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'verified', 'can
 |--------------------------------------------------------------------------
 */
 
-// Moderation works on pending reviews, which ApprovedScope hides from the
-// default route model binding — resolve {review} without it.
-Route::bind('review', fn (string $value) => Review::withoutGlobalScope(ApprovedScope::class)->findOrFail($value));
-
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('dashboard');
 
@@ -134,6 +156,7 @@ Route::prefix('lab')->name('lab.')->middleware('lab')->group(function () {
     Route::get('/n-plus-one', LabNPlusOneController::class)->name('n-plus-one');
     Route::get('/collections', LabCollectionsController::class)->name('collections');
     Route::get('/models', LabModelsController::class)->name('models');
+    Route::get('/xss', LabXssController::class)->name('xss');
 });
 
 // Any unmatched URL => our custom 404 page (instead of the framework's default).

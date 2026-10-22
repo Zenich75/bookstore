@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Manage;
 
 use App\Enums\StockMovementReason;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Manage\UpdateStockRequest;
 use App\Models\Stock;
 use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -19,11 +18,6 @@ use Illuminate\View\View;
  */
 class StockController extends Controller
 {
-    /**
-     * Reasons a manager may pick; "import" is reserved for bulk imports.
-     */
-    private const REASONS = [StockMovementReason::Receipt, StockMovementReason::Sale, StockMovementReason::Adjustment];
-
     public function index(Warehouse $warehouse): View
     {
         $warehouse->load('manager:id,name,warehouse_id');
@@ -45,24 +39,17 @@ class StockController extends Controller
         return view('manage.stocks.edit', [
             'warehouse' => $warehouse,
             'stock' => $stock,
-            'reasons' => self::REASONS,
+            'reasons' => UpdateStockRequest::REASONS,
         ]);
     }
 
-    public function update(Request $request, Warehouse $warehouse, Stock $stock): RedirectResponse
+    public function update(UpdateStockRequest $request, Warehouse $warehouse, Stock $stock): RedirectResponse
     {
-        // Inline validation for now; moves to a Form Request in stage 8.
-        $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0', 'max:1000000'],
-            'reserved' => ['required', 'integer', 'min:0', 'lte:quantity'],
-            'shelf_code' => ['nullable', 'string', 'max:20'],
-            'reason' => ['required', Rule::enum(StockMovementReason::class)->only(self::REASONS)],
-        ]);
-
         // Transient property read by StockObserver: the movement gets this reason
-        // and the current user (auth()->id()).
-        $stock->movementReason = StockMovementReason::from($data['reason']);
-        $stock->fill(collect($data)->except('reason')->all())->save();
+        // (adjustment when none was given) and the current user (auth()->id()).
+        $stock->movementReason = $request->safe()->enum('reason', StockMovementReason::class);
+        // safe()->except(): validated data minus the reason, which is not a column.
+        $stock->fill($request->safe()->except('reason'))->save();
         $stock->load('book:id,title'); // strict mode: no lazy loading for the flash message
 
         return redirect()

@@ -5,20 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\AuthorRole;
 use App\Enums\BookFormat;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreBookRequest;
+use App\Http\Requests\Admin\UpdateBookRequest;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
 use App\Models\Scopes\ApprovedScope;
 use App\Models\Tag;
-use App\ValueObjects\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Authorize;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -62,13 +61,15 @@ class BookController extends Controller
         return view('admin.books.form', ['book' => new Book, ...$this->formOptions()]);
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * StoreBookRequest has already authorized and validated the input by the time
+     * this runs; a failure never reaches the action.
+     */
+    public function store(StoreBookRequest $request): RedirectResponse
     {
         $book = DB::transaction(function () use ($request) {
-            $data = $this->validated($request);
-
-            $book = Book::create($data['attributes']); // slug: HasSlug
-            $this->syncRelations($book, $data);
+            $book = Book::create($request->bookAttributes()); // blank slug: HasSlug
+            $this->syncRelations($book, $request);
 
             return $book;
         });
@@ -97,13 +98,11 @@ class BookController extends Controller
         return view('admin.books.form', ['book' => $book, ...$this->formOptions()]);
     }
 
-    public function update(Request $request, Book $book): RedirectResponse
+    public function update(UpdateBookRequest $request, Book $book): RedirectResponse
     {
         DB::transaction(function () use ($request, $book) {
-            $data = $this->validated($request, $book);
-
-            $book->update($data['attributes']); // the slug stays (see HasSlug)
-            $this->syncRelations($book, $data);
+            $book->update($request->bookAttributes()); // a blank slug field keeps the current slug
+            $this->syncRelations($book, $request);
         });
 
         return redirect()->route('admin.books.show', $book)
@@ -158,67 +157,12 @@ class BookController extends Controller
     }
 
     /**
-     * Inline validation for now; moves to a Form Request in stage 8.
-     *
-     * @return array{attributes: array<string, mixed>, authors: array<int, array{role: string, sort_order: int}>, genres: list<int>, tags: list<int>}
-     */
-    private function validated(Request $request, ?Book $book = null): array
-    {
-        // ISBN may be typed with dashes/spaces; validate (and check uniqueness of) the digits.
-        $request->merge(['isbn' => preg_replace('/\D+/', '', (string) $request->input('isbn'))]);
-
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'isbn' => ['required', 'digits:13', Rule::unique('books', 'isbn')->ignore($book)],
-            'price' => ['required', 'regex:/^\d{1,7}([.,]\d{1,2})?$/'],
-            'format' => ['required', Rule::enum(BookFormat::class)],
-            'genre_id' => ['required', 'integer', 'exists:genres,id'],
-            // books.published_at is a TIMESTAMP column: 1970-01-01 .. 2038-01-19 only.
-            'published_at' => ['nullable', 'date', 'after:1970-01-01', 'before:2038-01-19'],
-            'authors' => ['array', 'max:10'],
-            'authors.*.id' => ['nullable', 'integer', 'distinct', 'exists:authors,id'],
-            'authors.*.role' => ['required_with:authors.*.id', Rule::enum(AuthorRole::class)],
-            'genres' => ['array'],
-            'genres.*' => ['integer', 'exists:genres,id'],
-            'tags' => ['array'],
-            'tags.*' => ['integer', 'exists:tags,id'],
-        ]);
-
-        $publishedAt = isset($data['published_at']) ? Carbon::parse($data['published_at']) : null;
-
-        // sync() payload: [author_id => pivot columns]. Row order = display order.
-        $authors = collect($data['authors'] ?? [])
-            ->filter(fn (array $row) => filled($row['id'] ?? null))
-            ->values()
-            ->mapWithKeys(fn (array $row, int $i) => [(int) $row['id'] => ['role' => $row['role'], 'sort_order' => $i]])
-            ->all();
-
-        return [
-            'attributes' => [
-                'title' => $data['title'],
-                'isbn' => $data['isbn'],
-                'price' => Money::fromUah($data['price']),
-                'format' => $data['format'],
-                'genre_id' => $data['genre_id'],
-                'published_at' => $publishedAt,
-                'published_year' => $publishedAt?->year,
-            ],
-            'authors' => $authors,
-            // The main genre is books.genre_id; it is not repeated as a secondary one.
-            'genres' => array_values(array_diff(array_map('intval', $data['genres'] ?? []), [(int) $data['genre_id']])),
-            'tags' => array_map('intval', $data['tags'] ?? []),
-        ];
-    }
-
-    /**
      * sync(): attach what is new, update pivot columns of what stays, detach the rest.
-     *
-     * @param  array{authors: array<int, array{role: string, sort_order: int}>, genres: list<int>, tags: list<int>}  $data
      */
-    private function syncRelations(Book $book, array $data): void
+    private function syncRelations(Book $book, StoreBookRequest $request): void
     {
-        $book->authors()->sync($data['authors']);
-        $book->genres()->sync($data['genres']);
-        $book->tags()->sync($data['tags']);
+        $book->authors()->sync($request->authorCredits());
+        $book->genres()->sync($request->secondaryGenreIds());
+        $book->tags()->sync($request->tagIds());
     }
 }

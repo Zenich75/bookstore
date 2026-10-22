@@ -100,3 +100,22 @@ test('active filters are shown as removable chips', function () {
         // The genre chip links to the catalog without the genre parameter.
         ->assertSee(route('books.index', ['format' => 'paperback']), false);
 });
+
+test('CatalogFilterRequest: invalid filters are dropped, valid ones still apply, no redirect or 422', function () {
+    Book::factory()->format(BookFormat::Ebook)->create(['title' => 'Digital']);
+    Book::factory()->format(BookFormat::Hardcover)->create(['title' => 'Printed']);
+
+    // format is valid, the rest is garbage: only the format filter applies.
+    expect(catalogTitles('/books?format=ebook&genre=nope&author=nobody&in_stock=maybe&sort=bogus'))->toBe(['Digital'])
+        ->and(catalogTitles('/books?format[]=ebook&sort[]=x'))->toHaveCount(2);
+
+    $this->get('/books?genre=nope')->assertOk()->assertSessionHasNoErrors();
+});
+
+test('CatalogFilterRequest: Rule::exists() constraint drops an author without books', function () {
+    Author::factory()->create(['slug' => 'no-books']);
+    Book::factory()->count(2)->create();
+
+    expect(catalogTitles('/books?author=no-books'))->toHaveCount(2);
+    $this->get('/books?author=no-books')->assertDontSee('data-filter="author"', false);
+});

@@ -180,9 +180,18 @@ return [
     |
     */
 
+    // bookstore: custom rules (ValidIsbn13, closure rule, after() hook)
+    'isbn13' => 'The :attribute field must contain the 13 digits of an ISBN (dashes and spaces allowed).',
+    'isbn13_checksum' => 'The :attribute field contains an ISBN with a wrong check digit.',
+    'no_links' => 'The :attribute field must not contain links.',
+    'reserved_exceeds_quantity' => 'Reserved cannot exceed the quantity.',
+
     'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
+        'shelf_code' => [
+            'required' => 'Enter a shelf code: there are copies in stock.',
+        ],
+        'authors.*.id' => [
+            'distinct' => 'This author is already selected in another row.',
         ],
     ],
 
@@ -197,6 +206,19 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'authors' => 'authors',
+        'authors.*.id' => 'author',
+        'authors.*.role' => 'author role',
+        'authors.*.sort_order' => 'author order',
+        'body' => 'review text',
+        'genre_id' => 'main genre',
+        'genres' => 'secondary genres',
+        'genres.*' => 'secondary genre',
+        'isbn' => 'ISBN',
+        'published_at' => 'publication date',
+        'shelf_code' => 'shelf code',
+        'tags.*' => 'tag',
+    ],
 
 ];

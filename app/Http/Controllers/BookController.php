@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookFormat;
 use App\Http\Controllers\Concerns\ShowsBook;
+use App\Http\Requests\CatalogFilterRequest;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
@@ -15,24 +16,21 @@ class BookController extends Controller
     use ShowsBook;
 
     /**
-     * Sort keys accepted by the catalog; anything else falls back to "newest".
+     * Sort keys accepted by the catalog (CatalogFilterRequest); anything else falls back to "newest".
      * Labels: lang/{en,uk}/ui.php => catalog.sorts.*
      */
     public const SORTS = ['newest', 'price_asc', 'price_desc', 'rating'];
 
-    public function index(Request $request): View
+    public function index(CatalogFilterRequest $request): View
     {
-        // Input is read leniently: unknown/invalid values are simply ignored.
-        // Proper validation (Form Requests) comes in stage 8.
-        $genre = $request->filled('genre')
-            ? Genre::firstWhere('slug', $request->string('genre')->toString())
-            : null;
-        $author = $request->filled('author')
-            ? Author::firstWhere('slug', $request->string('author')->toString())
-            : null;
-        $format = $request->enum('format', BookFormat::class);
-        $inStock = $request->boolean('in_stock');
-        $sort = in_array($sort = $request->string('sort', 'newest')->toString(), self::SORTS, true) ? $sort : 'newest';
+        // Only filters that passed validation; invalid ones were dropped by the request.
+        $filters = $request->filters();
+
+        $genre = isset($filters['genre']) ? Genre::firstWhere('slug', $filters['genre']) : null;
+        $author = isset($filters['author']) ? Author::firstWhere('slug', $filters['author']) : null;
+        $format = isset($filters['format']) ? BookFormat::from($filters['format']) : null;
+        $inStock = filter_var($filters['in_stock'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $sort = $filters['sort'] ?? 'newest';
 
         // Conditional query building with when() + local scopes (Book model): each
         // filter reads like a sentence, and the same scopes serve other pages and tests.
