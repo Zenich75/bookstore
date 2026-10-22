@@ -50,7 +50,9 @@ class MakeImportSample extends Command
                 'genre' => $faker->randomElement($genres),
                 'format' => $faker->randomElement(BookFormat::cases())->value,
                 'price' => $faker->numberBetween(99, 1499).','.$faker->randomElement(['00', '50', '90']),
-                'published_at' => $faker->optional(0.8)->date('Y-m-d', '2025-12-31') ?? '',
+                // Inside the books.published_at TIMESTAMP range (after 1970-01-01): Faker's
+                // date() starts at the Unix epoch and would produce invalid "valid" rows.
+                'published_at' => $faker->optional(0.8)->dateTimeBetween('-40 years', '-1 day')?->format('Y-m-d') ?? '',
                 'quantity' => $faker->numberBetween(1, 40),
                 'shelf_code' => sprintf('%s-%02d-%d', chr(random_int(65, 72)), random_int(1, 40), random_int(1, 6)),
             ];
